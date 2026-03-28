@@ -1,0 +1,89 @@
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { formatINR } from '../../utils/fdRdCalculations';
+
+export default function FdGrowthChart({ schedule }) {
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xl">
+          <p className="text-xs font-bold text-slate-500 underline mb-2 tracking-widest uppercase">{label}</p>
+          {payload.map((entry, index) => (
+            <div key={index} className="flex items-center justify-between space-x-8 mb-1">
+              <span className="text-[10px] font-bold uppercase transition-colors" style={{ color: entry.stroke }}>{entry.name}</span>
+              <span className="text-sm font-black text-slate-900 dark:text-slate-100">{formatINR(entry.value)}</span>
+            </div>
+          ))}
+          <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase">Total Value</span>
+            <span className="text-sm font-black text-slate-700 dark:text-slate-300">
+              {formatINR(payload.reduce((sum, e) => sum + e.value, 0))}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="glass-panel p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 h-[400px] flex flex-col">
+      <div className="flex flex-col mb-6">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Your FD Growth</h3>
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">Principal + Interest Accumulation</p>
+      </div>
+
+      <div className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={schedule} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorPrincipal" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+              </linearGradient>
+              <linearGradient id="colorInterest" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
+            <XAxis 
+              dataKey="label" 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+              dy={10}
+            />
+            <YAxis 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+              tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend verticalAlign="top" align="right" height={36}/>
+            <Area 
+              type="monotone" 
+              dataKey="principal" 
+              name="Principal"
+              stroke="#3b82f6" 
+              strokeWidth={3}
+              fillOpacity={1} 
+              fill="url(#colorPrincipal)" 
+              stackId="1"
+            />
+            <Area 
+              type="monotone" 
+              dataKey="interest" 
+              name="Interest"
+              stroke="#10b981" 
+              strokeWidth={3}
+              fillOpacity={1} 
+              fill="url(#colorInterest)" 
+              stackId="1"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
