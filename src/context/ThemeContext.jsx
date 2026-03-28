@@ -6,7 +6,6 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('finsight-theme');
     if (saved) return saved;
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
     return 'light';
   });
 
