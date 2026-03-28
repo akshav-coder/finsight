@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-primary-50: var(--theme-primary-50);
+  --color-primary-100: var(--theme-primary-100);
+  --color-primary-200: var(--theme-primary-200);
+  --color-primary-300: var(--theme-primary-300);
+  --color-primary-400: var(--theme-primary-400);
+  --color-primary-500: var(--theme-primary-500);
+  --color-primary-600: var(--theme-primary-600);
+  --color-primary-700: var(--theme-primary-700);
+  --color-primary-800: var(--theme-primary-800);
+  --color-primary-900: var(--theme-primary-900);
+  --color-primary-950: var(--theme-primary-950);
+  
+  --color-success-50: #f0fdf4;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Outfit', sans-serif;
+}
+
+:root {
+  /* Default: Blush Coral Scale (based on Tailwind Rose) */
+  --theme-primary-50: #fff1f2;
+  --theme-primary-100: #ffe4e6;
+  --theme-primary-200: #fecdd3;
+  --theme-primary-300: #fda4af;
+  --theme-primary-400: #fb7185;
+  --theme-primary-500: #f43f5e;
+  --theme-primary-600: #e11d48;
+  --theme-primary-700: #be123c;
+  --theme-primary-800: #9f1239;
+  --theme-primary-900: #881337;
+  --theme-primary-950: #4c0519;
+  
+  --bg-blob-1: rgba(251, 113, 133, 0.15); /* Soft Blush */
+  --bg-blob-2: rgba(253, 186, 116, 0.15); /* Soft Apricot */
+}
+
+.dark {
+  --bg-blob-1: rgba(225, 29, 72, 0.15); /* Dark Coral */
+  --bg-blob-2: rgba(234, 88, 12, 0.15); /* Dark Orange/Apricot */
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.5); /* slate-900 / 50% */
+  border-color: rgba(30, 41, 59, 0.6); /* slate-800 / 60% */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom scrollbar for tables */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
