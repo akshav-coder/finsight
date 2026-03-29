@@ -44,9 +44,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function SIPBasicTab() {
-  const [monthly, setMonthly] = useState(5000);
-  const [rate, setRate] = useState(12);
-  const [years, setYears] = useState(20);
+  const [monthly, setMonthly] = useState(0);
+  const [rate, setRate] = useState(0);
+  const [years, setYears] = useState(0);
   
   const [stepUpEnabled, setStepUpEnabled] = useState(false);
   const [stepUpPercent, setStepUpPercent] = useState(10);
@@ -156,10 +156,10 @@ export default function SIPBasicTab() {
             </div>
             <input
               type="range"
-              min="500"
+              min="0"
               max="100000"
               step="500"
-              value={monthly}
+              value={monthly || 0}
               onChange={(e) => setMonthly(Number(e.target.value))}
               className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
             />
@@ -190,9 +190,10 @@ export default function SIPBasicTab() {
               <div className="flex items-center space-x-1 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold rounded-lg border border-blue-200 dark:border-blue-800/50">
                 <input
                   type="number"
-                  value={rate}
-                  onChange={(e) => setRate(Number(e.target.value))}
-                  className="w-10 bg-transparent text-right outline-none appearance-none"
+                  value={rate || ''}
+                  onChange={(e) => setRate(e.target.value === '' ? 0 : Number(e.target.value))}
+                  placeholder="0"
+                  className="w-10 bg-transparent text-right outline-none appearance-none placeholder:text-blue-400"
                 />
                 <span>%</span>
               </div>
@@ -236,10 +237,10 @@ export default function SIPBasicTab() {
             </div>
             <input
               type="range"
-              min="1"
+              min="0"
               max="40"
               step="1"
-              value={years}
+              value={years || 0}
               onChange={(e) => setYears(Number(e.target.value))}
               className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
             />

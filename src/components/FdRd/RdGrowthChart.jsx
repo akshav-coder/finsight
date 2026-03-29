@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart3 } from 'lucide-react';
 import { formatINR } from '../../utils/fdRdCalculations';
 
 export default function RdGrowthChart({ schedule }) {
@@ -32,29 +33,43 @@ export default function RdGrowthChart({ schedule }) {
         <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">Monthly Deposit vs. Interest</p>
       </div>
 
-      <div className="flex-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={schedule} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
-            <XAxis 
-              dataKey="label" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
-              dy={10}
-            />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
-              tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9', opacity: 0.4 }} />
-            <Legend verticalAlign="top" align="right" height={36}/>
-            <Bar dataKey="deposited" name="Deposited" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} animationDuration={1500} />
-            <Bar dataKey="interest" name="Interest" stackId="a" fill="#10b981" radius={[4, 4, 0, 0]} animationDuration={1500} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="flex-1 min-h-[250px] relative">
+        {schedule && schedule.length > 0 && schedule.some(d => d.deposited > 0 || d.interest > 0) ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={schedule} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
+              <XAxis 
+                dataKey="label" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                dy={10}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9', opacity: 0.4 }} />
+              <Legend verticalAlign="top" align="right" height={36}/>
+              <Bar dataKey="deposited" name="Deposited" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} animationDuration={1500} />
+              <Bar dataKey="interest" name="Interest" stackId="a" fill="#10b981" radius={[4, 4, 0, 0]} animationDuration={1500} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 space-y-3 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+             <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm">
+                <BarChart3 className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+             </div>
+             <div>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Deposit Growth</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-[180px]">
+                  Graphics will appear once you enter your monthly deposit details.
+                </p>
+             </div>
+          </div>
+        )}
       </div>
     </div>
   );

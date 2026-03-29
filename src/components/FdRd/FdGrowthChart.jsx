@@ -1,4 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { TrendingUp } from 'lucide-react';
 import { formatINR } from '../../utils/fdRdCalculations';
 
 export default function FdGrowthChart({ schedule }) {
@@ -32,57 +33,71 @@ export default function FdGrowthChart({ schedule }) {
         <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">Principal + Interest Accumulation</p>
       </div>
 
-      <div className="flex-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={schedule} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorPrincipal" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-              </linearGradient>
-              <linearGradient id="colorInterest" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
-            <XAxis 
-              dataKey="label" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
-              dy={10}
-            />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
-              tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend verticalAlign="top" align="right" height={36}/>
-            <Area 
-              type="monotone" 
-              dataKey="principal" 
-              name="Principal"
-              stroke="#3b82f6" 
-              strokeWidth={3}
-              fillOpacity={1} 
-              fill="url(#colorPrincipal)" 
-              stackId="1"
-            />
-            <Area 
-              type="monotone" 
-              dataKey="interest" 
-              name="Interest"
-              stroke="#10b981" 
-              strokeWidth={3}
-              fillOpacity={1} 
-              fill="url(#colorInterest)" 
-              stackId="1"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+      <div className="flex-1 min-h-[250px] relative">
+        {schedule && schedule.length > 0 && schedule.some(d => d.principal > 0 || d.interest > 0) ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={schedule} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorPrincipal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorInterest" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
+              <XAxis 
+                dataKey="label" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                dy={10}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend verticalAlign="top" align="right" height={36}/>
+              <Area 
+                type="monotone" 
+                dataKey="principal" 
+                name="Principal"
+                stroke="#3b82f6" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorPrincipal)" 
+                stackId="1"
+              />
+              <Area 
+                type="monotone" 
+                dataKey="interest" 
+                name="Interest"
+                stroke="#10b981" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorInterest)" 
+                stackId="1"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 space-y-3 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+             <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm">
+                <TrendingUp className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+             </div>
+             <div>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Growth Visualization</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-[180px]">
+                  Graphics will appear once you enter your investment details.
+                </p>
+             </div>
+          </div>
+        )}
       </div>
     </div>
   );

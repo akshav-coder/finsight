@@ -45,7 +45,7 @@ export default function FdRdAISummary({ type, data, results }) {
       featureName="AI Investment Advisor"
       description="Compare your fixed-income returns against inflation and get suggestions on alternative high-yield instruments tailored to your tax slab."
     >
-      <div className="glass-panel p-6 rounded-3xl shadow-sm border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/10 dark:bg-emerald-900/5 transition-colors duration-200 h-full">
+      <div className="glass-panel p-6 rounded-3xl shadow-sm border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/10 dark:bg-emerald-900/5 transition-colors duration-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
             <Sparkles className="w-5 h-5 text-emerald-500 mr-2" />

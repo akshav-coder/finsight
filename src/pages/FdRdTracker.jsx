@@ -25,24 +25,24 @@ export default function FdRdTracker() {
   
   // FD State
   const [fdData, setFdData] = useState({
-    amount: 100000,
-    rate: 7.10,
-    years: 1,
+    amount: 0,
+    rate: 0,
+    years: 0,
     months: 0,
     days: 0,
     compounding: 4,
     payoutType: 'Cumulative',
     payoutFrequency: 'Monthly',
-    taxSlab: 20
+    taxSlab: 0
   });
 
   // RD State
   const [rdData, setRdData] = useState({
-    monthlyAmount: 5000,
-    rate: 6.50,
-    months: 12,
+    monthlyAmount: 0,
+    rate: 0,
+    months: 0,
     days: 0,
-    taxSlab: 20
+    taxSlab: 0
   });
 
   // Derived FD Results

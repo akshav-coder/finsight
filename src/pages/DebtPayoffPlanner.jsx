@@ -17,17 +17,22 @@ import DebtAIRecommendation from '../components/DebtPlanner/DebtAIRecommendation
 
 export default function DebtPayoffPlanner() {
   // Pre-filled example debts
-  const [debts, setDebts] = useState([
-    { id: '1', name: 'HDFC Credit Card', type: 'Credit Card', balance: 80000, rate: 36, minPayment: 4000 },
-    { id: '2', name: 'Personal Loan', type: 'Personal Loan', balance: 250000, rate: 18, minPayment: 6500 },
-    { id: '3', name: 'Car Loan', type: 'Car Loan', balance: 450000, rate: 10.5, minPayment: 9500 }
-  ]);
-  const [extraPayment, setExtraPayment] = useState(5000);
+  const [debts, setDebts] = useState([]);
+  const [extraPayment, setExtraPayment] = useState(0);
   const [selectedStrategy, setSelectedStrategy] = useState('avalanche');
 
   // Calculations
   const results = useMemo(() => {
-    if (debts.length === 0) return null;
+    if (!debts || debts.length === 0) return {
+      avalanche: [],
+      snowball: [],
+      minOnly: [],
+      totalDebt: 0,
+      totalMinPayment: 0,
+      avalancheInterest: 0,
+      snowballInterest: 0,
+      minOnlyInterest: 0
+    };
 
     const avalanche = avalancheSchedule(debts, extraPayment);
     const snowball = snowballSchedule(debts, extraPayment);
@@ -86,44 +91,48 @@ export default function DebtPayoffPlanner() {
             setSelectedStrategy={setSelectedStrategy} 
           />
           
-          <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
-            <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center mb-6">
-              <TrendingDown className="w-5 h-5 mr-2 text-primary-500" />
-              Payoff Timeline Comparison
-            </h2>
-            <PayoffTimelineChart results={results} />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <MotivationMilestone 
-               schedule={selectedStrategy === 'avalanche' ? results.avalanche : results.snowball} 
-               strategyName={selectedStrategy}
-             />
-             <div className="space-y-4">
-                <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center px-1">
-                  <Zap className="w-5 h-5 mr-2 text-amber-500" />
-                  Debt Payoff Status
+          {results.totalDebt > 0 && (
+            <>
+              <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+                <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center mb-6">
+                  <TrendingDown className="w-5 h-5 mr-2 text-primary-500" />
+                  Payoff Timeline Comparison
                 </h2>
-                <DebtProgressCards 
-                  debts={debts} 
+                <PayoffTimelineChart results={results} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <MotivationMilestone 
                   schedule={selectedStrategy === 'avalanche' ? results.avalanche : results.snowball} 
                   strategyName={selectedStrategy}
                 />
-             </div>
-          </div>
+                <div className="space-y-4">
+                    <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center px-1">
+                      <Zap className="w-5 h-5 mr-2 text-amber-500" />
+                      Debt Payoff Status
+                    </h2>
+                    <DebtProgressCards 
+                      debts={debts} 
+                      schedule={selectedStrategy === 'avalanche' ? results.avalanche : results.snowball} 
+                      strategyName={selectedStrategy}
+                    />
+                </div>
+              </div>
 
-          <div className="glass-panel rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-              <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center">
-                <Table className="w-5 h-5 mr-2 text-emerald-500" />
-                {selectedStrategy === 'avalanche' ? 'Avalanche' : 'Snowball'} Payoff Schedule
-              </h2>
-            </div>
-            <PayoffScheduleTable 
-              schedule={selectedStrategy === 'avalanche' ? results.avalanche : results.snowball} 
-              debts={debts}
-            />
-          </div>
+              <div className="glass-panel rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center">
+                    <Table className="w-5 h-5 mr-2 text-emerald-500" />
+                    {selectedStrategy === 'avalanche' ? 'Avalanche' : 'Snowball'} Payoff Schedule
+                  </h2>
+                </div>
+                <PayoffScheduleTable 
+                  schedule={selectedStrategy === 'avalanche' ? results.avalanche : results.snowball} 
+                  debts={debts}
+                />
+              </div>
+            </>
+          )}
 
           <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-start space-x-3">
             <Info className="w-5 h-5 text-slate-400 mt-0.5" />

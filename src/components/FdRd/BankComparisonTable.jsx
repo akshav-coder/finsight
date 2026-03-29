@@ -73,57 +73,71 @@ export default function BankComparisonTable({ type, userRate, tenure, amount }) 
       </div>
 
       <div className="flex-1 overflow-auto max-h-[400px] scrollbar-hide">
-        <table className="w-full text-left border-separate border-spacing-y-2">
-          <thead>
-            <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              <th className="pb-2 pl-2">Bank</th>
-              <th className="pb-2">Rate</th>
-              <th className="pb-2">Maturity</th>
-              <th className="pb-2 pr-2 text-right">vs Yours</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedBanks.map((bank, i) => {
-              const currentRate = getRate(bank);
-              const bankMaturity = calcMaturity(currentRate);
-              const diff = bankMaturity - userMaturity;
-              const isBest = currentRate === bestRate;
-              const isUser = Math.abs(currentRate - userRate) < 0.01;
+        {amount > 0 ? (
+          <table className="w-full text-left border-separate border-spacing-y-2">
+            <thead>
+              <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <th className="pb-2 pl-2">Bank</th>
+                <th className="pb-2">Rate</th>
+                <th className="pb-2">Maturity</th>
+                <th className="pb-2 pr-2 text-right">vs Yours</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedBanks.map((bank, i) => {
+                const currentRate = getRate(bank);
+                const bankMaturity = calcMaturity(currentRate);
+                const diff = bankMaturity - userMaturity;
+                const isBest = currentRate === bestRate;
+                const isUser = Math.abs(currentRate - userRate) < 0.01;
 
-              return (
-                <tr 
-                  key={i} 
-                  className={`group transition-all hover:scale-[1.01] ${
-                    isBest ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : 
-                    isUser ? 'bg-blue-50/50 dark:bg-blue-900/10' : 
-                    'bg-slate-50/50 dark:bg-slate-800/30'
-                  } rounded-xl`}
-                >
-                  <td className="py-3 pl-4 rounded-l-xl">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{bank.name}</span>
-                      {isUser && <span className="text-[9px] text-blue-500 font-bold uppercase">Your Rate</span>}
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <span className={`text-sm font-black ${isBest ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>
-                      {currentRate.toFixed(2)}%
-                    </span>
-                  </td>
-                  <td className="py-3">
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{formatINR(bankMaturity)}</span>
-                  </td>
-                  <td className={`py-3 pr-4 text-right rounded-r-xl font-bold text-xs ${diff >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {diff > 0 ? `+${formatINR(diff)}` : diff < 0 ? `-${formatINR(Math.abs(diff))}` : 'Match'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr 
+                    key={i} 
+                    className={`group transition-all hover:scale-[1.01] ${
+                      isBest ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : 
+                      isUser ? 'bg-blue-50/50 dark:bg-blue-900/10' : 
+                      'bg-slate-50/50 dark:bg-slate-800/30'
+                    } rounded-xl`}
+                  >
+                    <td className="py-3 pl-4 rounded-l-xl">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{bank.name}</span>
+                        {isUser && <span className="text-[9px] text-blue-500 font-bold uppercase">Your Rate</span>}
+                      </div>
+                    </td>
+                    <td className="py-3">
+                      <span className={`text-sm font-black ${isBest ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                        {currentRate.toFixed(2)}%
+                      </span>
+                    </td>
+                    <td className="py-3">
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{formatINR(bankMaturity)}</span>
+                    </td>
+                    <td className={`py-3 pr-4 text-right rounded-r-xl font-bold text-xs ${diff >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      {diff > 0 ? `+${formatINR(diff)}` : diff < 0 ? `-${formatINR(Math.abs(diff))}` : 'Match'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
+             <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                <TrendingUp className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+             </div>
+             <div>
+                <p className="text-slate-900 dark:text-white font-bold">Compare Maturity Values</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[200px] mt-1">
+                  Enter a deposit amount on the left to see how much you could earn with different banks.
+                </p>
+             </div>
+          </div>
+        )}
       </div>
 
-      {extraGain > 0 && (
+      {amount > 0 && extraGain > 0 && (
         <div className="mt-6 p-4 bg-emerald-600 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center">

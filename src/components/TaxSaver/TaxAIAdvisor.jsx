@@ -58,10 +58,10 @@ export default function TaxAIAdvisor({ inputs, taxAnalysis }) {
       featureName="Pocket CA Advisor"
       description="Get personalized tax optimization strategies. Our AI analyzes your deductions and investments to find legal ways to reduce your tax liability to zero."
     >
-      <div className="relative group overflow-hidden rounded-3xl p-1 bg-gradient-to-r from-purple-500/20 to-blue-500/20 hover:from-purple-500/30 hover:to-blue-500/30 transition-all duration-300 h-full">
+      <div className="relative group overflow-hidden rounded-3xl p-1 bg-gradient-to-r from-purple-500/20 to-blue-500/20 hover:from-purple-500/30 hover:to-blue-500/30 transition-all duration-300">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
         
-        <div className="relative bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl p-6 rounded-[22px] border border-white/20 dark:border-slate-800/50 h-full flex flex-col">
+        <div className="relative bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl p-6 rounded-[22px] border border-white/20 dark:border-slate-800/50 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-blue-500 p-0.5 shadow-lg shadow-purple-500/30">
