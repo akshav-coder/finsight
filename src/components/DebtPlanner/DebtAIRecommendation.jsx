@@ -54,7 +54,7 @@ Use Indian number format. No markdown. Be direct.`;
       featureName="Smart Debt Consultant"
       description="Get personalized advice on which debt to attack first and which strategy (Snowball vs. Avalanche) fits your psychology and math perfectly."
     >
-      <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-indigo-50/20 dark:bg-indigo-900/10 h-full">
+      <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-indigo-50/20 dark:bg-indigo-900/10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center uppercase tracking-tight">
             <BrainCircuit className="w-5 h-5 mr-2 text-indigo-500" />

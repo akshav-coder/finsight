@@ -43,7 +43,7 @@ export default function BankComparisonTable({ type, userRate, tenure, amount }) 
   const extraGain = Math.max(0, bestMaturity - userMaturity);
 
   return (
-    <div className="glass-panel p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full">
+    <div className="glass-panel p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
@@ -123,7 +123,7 @@ export default function BankComparisonTable({ type, userRate, tenure, amount }) 
             </tbody>
           </table>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
+          <div className="flex flex-col items-center justify-center text-center p-8 space-y-3 min-h-[200px]">
              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                 <TrendingUp className="w-8 h-8 text-slate-300 dark:text-slate-600" />
              </div>
