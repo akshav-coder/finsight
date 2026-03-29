@@ -40,7 +40,7 @@ Use Indian number format (lakhs/crores). No markdown. No bold text. Just plain t
       featureName="AI Loan Strategy"
       description="Deep dive into the true cost of your debt. Our AI analyzes your prepayment potential to maximize savings and cut your tenure in half."
     >
-      <div className="glass-panel p-6 rounded-3xl shadow-sm border border-primary-100 dark:border-primary-900/30 bg-primary-50/10 dark:bg-primary-900/5 transition-colors duration-200 h-full">
+      <div className="glass-panel p-6 rounded-3xl shadow-sm border border-primary-100 dark:border-primary-900/30 bg-primary-50/10 dark:bg-primary-900/5 transition-colors duration-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
             <Sparkles className="w-5 h-5 text-primary-500 mr-2" />

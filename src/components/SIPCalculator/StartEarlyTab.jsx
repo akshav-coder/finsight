@@ -29,16 +29,15 @@ const SliderInput = ({ label, value, onChange, min, max, step, format, accentCla
       <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</label>
       <input
         type="number"
-        value={value}
-        onChange={(e) => onChange(Math.max(min, Math.min(max, Number(e.target.value) || min)))}
-        min={min}
-        max={max}
-        className="w-28 text-right px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+        placeholder="0"
+        className="w-28 text-right px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none placeholder:text-slate-400"
       />
     </div>
     <input
-      type="range" min={min} max={max} step={step}
-      value={value} onChange={(e) => onChange(Number(e.target.value))}
+      type="range" min={0} max={max} step={step}
+      value={value || 0} onChange={(e) => onChange(Number(e.target.value))}
       className={`w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer ${accentClass}`}
     />
     <div className="flex justify-between text-[9px] text-slate-400">
@@ -49,8 +48,8 @@ const SliderInput = ({ label, value, onChange, min, max, step, format, accentCla
 );
 
 export default function StartEarlyTab() {
-  const [monthly, setMonthly] = useState(5000);
-  const [rate, setRate] = useState(12);
+  const [monthly, setMonthly] = useState(0);
+  const [rate, setRate] = useState(0);
   const [stepUp, setStepUp] = useState(0); // Annual step-up %
   const [currentAge, setCurrentAge] = useState(25);
   const [retireAge, setRetireAge] = useState(60);

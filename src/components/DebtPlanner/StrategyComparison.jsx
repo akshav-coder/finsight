@@ -10,6 +10,22 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
   
   const savings = results.snowballInterest - results.avalancheInterest;
 
+  if (!results.totalDebt || results.totalDebt === 0) {
+    return (
+      <div className="lg:col-span-8 glass-panel p-12 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-center space-y-4">
+        <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-full">
+          <Zap className="w-8 h-8 text-slate-300" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">No Debts Added Yet</h3>
+          <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-2">
+            Add your loans or credit card balances on the left to see your personalized payoff strategy and savings.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Avalanche Strategy */}
@@ -64,7 +80,7 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
              <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Payoff Order</div>
              <div className="space-y-2">
                 {/* Find Payoff Order for Avalanche (Sorted by Rate) */}
-                {results.avalanche[0].debtStates.map((d, i) => (
+                {results.avalanche?.[0]?.debtStates?.map((d, i) => (
                    <div key={d.name} className="flex items-center space-x-2">
                       <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400">
                          {i + 1}
@@ -130,7 +146,7 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
              <div className="space-y-2">
                 {/* For actual order, we'd need to simulate or use the starting sort */}
                 {/* For snowball, it's just by balance ascending */}
-                {results.snowball[0].debtStates.map((d, i) => (
+                {results.snowball?.[0]?.debtStates?.map((d, i) => (
                    <div key={d.name} className="flex items-center space-x-2">
                       <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400">
                          {i + 1}

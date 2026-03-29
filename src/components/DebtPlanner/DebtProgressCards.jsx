@@ -3,10 +3,11 @@ import { formatINR, formatMonths } from '../../utils/debtCalculations';
 export default function DebtProgressCards({ debts, schedule, strategyName }) {
   // Get the month when each debt is first fully paid off (balance reaches 0)
   const getPayoffMonth = (debtName) => {
+    if (!schedule || schedule.length === 0) return 0;
     const payoffRow = schedule.find(row =>
-      row.debtStates.find(d => d.name === debtName)?.balance === 0
+      row.debtStates?.find(d => d.name === debtName)?.balance === 0
     );
-    return payoffRow ? payoffRow.month : schedule.length;
+    return payoffRow ? payoffRow.month : (schedule.length || 0);
   };
 
   // Sort debts by payoff month (earliest = highest priority in this strategy)

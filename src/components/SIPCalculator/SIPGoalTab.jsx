@@ -18,10 +18,10 @@ const PRESET_GOALS = [
 ];
 
 export default function SIPGoalTab() {
-  const [goalName, setGoalName] = useState('My Dream Goal');
-  const [targetAmount, setTargetAmount] = useState(5000000);
-  const [years, setYears] = useState(10);
-  const [rate, setRate] = useState(12);
+  const [goalName, setGoalName] = useState('');
+  const [targetAmount, setTargetAmount] = useState(0);
+  const [years, setYears] = useState(0);
+  const [rate, setRate] = useState(0);
   const [stepUpEnabled, setStepUpEnabled] = useState(false);
   const [stepUpPercent, setStepUpPercent] = useState(10);
   
@@ -126,15 +126,15 @@ export default function SIPGoalTab() {
               <div className="flex justify-between items-center">
                 <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Target Amount</label>
                 <div className="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold rounded-lg border border-green-200 dark:border-green-800/50">
-                  {formatINRLarge(targetAmount)}
+                  {formatINRLarge(targetAmount || 0)}
                 </div>
               </div>
               <input
                 type="range"
-                min="100000"
+                min="0"
                 max="50000000"
                 step="100000"
-                value={targetAmount}
+                value={targetAmount || 0}
                 onChange={(e) => handleCustomInput(() => setTargetAmount(Number(e.target.value)))}
                 className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500"
               />
@@ -149,10 +149,10 @@ export default function SIPGoalTab() {
               </div>
               <input
                 type="range"
-                min="1"
+                min="0"
                 max="40"
                 step="1"
-                value={years}
+                value={years || 0}
                 onChange={(e) => handleCustomInput(() => setYears(Number(e.target.value)))}
                 className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
               />
@@ -162,15 +162,15 @@ export default function SIPGoalTab() {
               <div className="flex justify-between items-center">
                 <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Expected Returns</label>
                 <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold rounded-lg border border-blue-200 dark:border-blue-800/50">
-                  {rate}%
+                  {rate || 0}%
                 </div>
               </div>
               <input
                 type="range"
-                min="1"
+                min="0"
                 max="30"
                 step="0.5"
-                value={rate}
+                value={rate || 0}
                 onChange={(e) => handleCustomInput(() => setRate(Number(e.target.value)))}
                 className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
               />

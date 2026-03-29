@@ -3,7 +3,7 @@ import { formatMonths } from '../../utils/debtCalculations';
 
 export default function MotivationMilestone({ schedule, strategyName }) {
   // Find payoff months for each debt
-  const debts = schedule[0]?.debtStates.map(d => d.name) || [];
+  const debts = schedule?.[0]?.debtStates?.map(d => d.name) || [];
   const milestones = [];
 
   debts.forEach(name => {

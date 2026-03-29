@@ -19,20 +19,20 @@ export default function SavingsAdvisor() {
 
   // Initial State
   const [formData, setFormData] = useState({
-    income: 60000,
-    rent: 12000,
+    income: 0,
+    rent: 0,
     loans: 0,
     insurance: 0,
-    foodDelivery: 4500,
-    groceries: 3000,
-    transport: 2000,
-    shopping: 6000,
-    entertainment: 2000,
-    bills: 1500,
+    foodDelivery: 0,
+    groceries: 0,
+    transport: 0,
+    shopping: 0,
+    entertainment: 0,
+    bills: 0,
     health: 0,
-    savings: 5000,
+    savings: 0,
     investments: 0,
-    emergencyFund: 20000
+    emergencyFund: 0
   });
 
   // Auto-detect statement data
