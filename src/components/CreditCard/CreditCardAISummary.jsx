@@ -46,7 +46,7 @@ export default function CreditCardAISummary({ cardData, results }) {
       featureName="AI Debt Strategist"
       description="Understand the hidden trap of minimum payments. Our AI creates a custom 'Escapade' plan to get you out of high-interest credit card debt 10x faster."
     >
-      <div className="glass-panel p-6 rounded-3xl shadow-sm border border-rose-100 dark:border-rose-900/30 bg-rose-50/10 dark:bg-rose-900/5 transition-colors duration-200 h-full">
+      <div className="glass-panel p-6 rounded-3xl shadow-sm border border-rose-100 dark:border-rose-900/30 bg-rose-50/10 dark:bg-rose-900/5 transition-colors duration-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
             <Sparkles className="w-5 h-5 text-rose-500 mr-2" />
