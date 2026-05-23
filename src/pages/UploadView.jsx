@@ -3,15 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { processFile } from '../utils/parseFile';
 import { analyzeTransactions } from '../utils/analyzeData';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import UploadScreen from '../components/UploadScreen';
+import { useAuth } from '../context/AuthContext';
 
 export default function UploadView() {
   const { setAppData } = useData();
+  const { canUpload, incrementUpload } = useAuth();
   const navigate = useNavigate();
   
   const [appState, setAppState] = useState('uploading');
   const [errorMsg, setErrorMsg] = useState('');
+
+  if (import.meta.env.VITE_ENABLE_AI !== 'true') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 animate-fade-in-up h-full min-h-[60vh]">
+        <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center mb-6 text-primary-500 dark:text-primary-400 shadow-inner">
+          <Sparkles className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2 text-center tracking-tight">AI Analysis Coming Soon 🚀</h2>
+        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md text-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-sm">
+          We're fine-tuning our AI models for the Indian market. Full statement analysis will be available in the coming weeks!
+        </p>
+      </div>
+    );
+  }
 
   const handleFileSelect = async (file) => {
     try {
@@ -25,6 +41,8 @@ export default function UploadView() {
       
       const analyzedData = analyzeTransactions(transactions);
       setAppData({ ...analyzedData, transactions });
+      
+      await incrementUpload();
       navigate('/app/statement-analytics/overview');
     } catch (err) {
       const isAIEnabled = import.meta.env.VITE_ENABLE_AI === 'true';
@@ -72,6 +90,35 @@ export default function UploadView() {
         >
           Try Again
         </button>
+      </div>
+    );
+  }
+
+  if (!canUpload) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 animate-fade-in-up h-full min-h-[60vh]">
+        <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center mb-6 text-primary-500 dark:text-primary-400 shadow-inner">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2 text-center tracking-tight">Upload Limit Reached</h2>
+        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md text-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-sm">
+          You've used your 2 free uploads this month. Resets on the 1st of next month.
+        </p>
+        {import.meta.env.VITE_ENABLE_PAYMENTS === 'true' ? (
+          <button 
+            onClick={() => navigate('/app/pricing')}
+            className="px-8 py-4 bg-primary-600 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-lg shadow-primary-500/30 hover:bg-primary-700 hover:-translate-y-1 transition-all"
+          >
+            Upgrade to Pro
+          </button>
+        ) : (
+          <button 
+            disabled
+            className="px-8 py-4 bg-slate-200 dark:bg-slate-800 text-slate-400 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-inner cursor-not-allowed"
+          >
+            Pro Coming Soon
+          </button>
+        )}
       </div>
     );
   }

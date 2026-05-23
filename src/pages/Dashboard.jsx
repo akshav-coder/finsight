@@ -108,7 +108,7 @@ const tools = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { historyCount, appData } = useData();
+  const { historyCount, appData, clearData } = useData();
 
   return (
     <div className="animate-fade-in-up max-w-[1600px] mx-auto w-full pb-20 space-y-12">
@@ -123,11 +123,21 @@ export default function Dashboard() {
           </p>
         </div>
         
-        <div className="flex items-center justify-center space-x-2 px-6 py-3 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm transition-transform hover:scale-105 duration-300">
-          <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">
-            Local & Private
-          </span>
+        <div className="flex items-center gap-3 justify-center md:justify-end">
+          {appData && (
+            <button 
+              onClick={clearData}
+              className="text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-danger-500 dark:hover:text-danger-400 transition-colors uppercase tracking-widest bg-slate-100 dark:bg-slate-800 hover:bg-danger-50 dark:hover:bg-danger-900/30 px-4 py-3 rounded-[2rem] border border-transparent hover:border-danger-200 dark:hover:border-danger-800/50"
+            >
+              Clear Data
+            </button>
+          )}
+          <div className="flex items-center justify-center space-x-2 px-6 py-3 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm transition-transform hover:scale-105 duration-300">
+            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">
+              Local & Private
+            </span>
+          </div>
         </div>
       </div>
 
@@ -169,21 +179,35 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="group glass-panel p-1 rounded-[2.5rem] border border-primary-500/20 bg-primary-500/5 hover:bg-primary-500/10 transition-all duration-500 cursor-pointer" onClick={() => navigate('/app/statement-analytics/upload')}>
-          <div className="h-full w-full p-7 flex flex-col justify-between items-start bg-gradient-to-br from-primary-600 to-indigo-700 rounded-[2.2rem] text-white shadow-lg shadow-primary-600/20 group-hover:scale-[0.98] transition-transform">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-              <PieChart className="w-5 h-5 text-white" />
+        {appData ? (
+          <div className="group glass-panel p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-900/50 hover:shadow-xl transition-all duration-500">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${appData.summary.netBalance >= 0 ? 'bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400' : 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'}`}>
+              <TrendingUp className="w-6 h-6" />
             </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-primary-200 mb-1">Direct Action</p>
-              <h3 className="text-xl font-bold leading-tight">Start New Analysis</h3>
+            <div className={`text-4xl font-black mb-1 tracking-tighter tabular-nums ${appData.summary.netBalance >= 0 ? 'text-success-600 dark:text-success-500' : 'text-danger-600 dark:text-danger-500'}`}>
+              {appData.summary.netBalance >= 0 ? '+' : '-'}₹{Math.abs(appData.summary.netBalance).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </div>
-            <div className="mt-4 flex items-center text-sm font-bold opacity-80">
-              <span>Go to upload</span>
-              <ChevronRight className="w-4 h-4 ml-1" />
+            <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+              Net Balance
+            </p>
+          </div>
+        ) : (
+          <div className="group glass-panel p-1 rounded-[2.5rem] border border-primary-500/20 bg-primary-500/5 hover:bg-primary-500/10 transition-all duration-500 cursor-pointer" onClick={() => navigate('/app/statement-analytics/upload')}>
+            <div className="h-full w-full p-7 flex flex-col justify-between items-start bg-gradient-to-br from-primary-600 to-indigo-700 rounded-[2.2rem] text-white shadow-lg shadow-primary-600/20 group-hover:scale-[0.98] transition-transform">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                <PieChart className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary-200 mb-1">Direct Action</p>
+                <h3 className="text-xl font-bold leading-tight">Start New Analysis</h3>
+              </div>
+              <div className="mt-4 flex items-center text-sm font-bold opacity-80">
+                <span>Go to upload</span>
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Toolbox grid heading */}
@@ -233,6 +257,23 @@ export default function Dashboard() {
           })}
         </div>
       </div>
+
+      {appData && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="glass-panel p-6 rounded-[2.5rem] flex flex-col items-center justify-center text-center border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl">
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Top Spending Category</p>
+            <h4 className="text-xl font-black text-slate-800 dark:text-slate-100">{appData.categoryData?.[0]?.name || 'N/A'}</h4>
+          </div>
+          <div className="glass-panel p-6 rounded-[2.5rem] flex flex-col items-center justify-center text-center border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl">
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Top Payee</p>
+            <h4 className="text-xl font-black text-slate-800 dark:text-slate-100">{appData.topPayees?.[0]?.name || 'N/A'}</h4>
+          </div>
+          <div className="glass-panel p-6 rounded-[2.5rem] flex flex-col items-center justify-center text-center border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl">
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Savings Rate</p>
+            <h4 className="text-xl font-black text-slate-800 dark:text-slate-100">{appData.summary.totalIn > 0 ? (((appData.summary.totalIn - appData.summary.totalOut) / appData.summary.totalIn) * 100).toFixed(0) : 0}%</h4>
+          </div>
+        </div>
+      )}
 
       {/* Banner / Recommendation */}
       {!appData && (

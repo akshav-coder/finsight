@@ -16,10 +16,12 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import ThemeToggle from './ThemeToggle';
 
 export default function Sidebar() {
   const { appData, setAppData } = useData();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
@@ -100,6 +102,35 @@ export default function Sidebar() {
             {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
             <span>{copied ? 'Data Copied!' : 'Copy AI JSON'}</span>
           </button>
+        )}
+
+        {user && (
+          <div className="flex items-center justify-between p-3 mb-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center space-x-3 overflow-hidden">
+              {user.photoURL ? (
+                <img src={user.photoURL} alt="Profile" className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold text-lg border-2 border-white dark:border-slate-700 shadow-sm shrink-0">
+                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+              )}
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+                  {user.displayName || 'User'}
+                </span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
+                  {user.email}
+                </span>
+              </div>
+            </div>
+            <button 
+              onClick={signOut}
+              className="p-2 rounded-xl text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition shrink-0"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         )}
 
         <button 

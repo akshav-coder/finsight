@@ -1,3 +1,58 @@
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+dayjs.extend(customParseFormat);
+
+const DATE_FORMATS = ['DD-MM-YYYY', 'YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD MMM YYYY', 'DD-MMM-YYYY'];
+
+function parseDateRobust(dateStr) {
+  if (!dateStr) return null;
+  let d = dayjs(dateStr, DATE_FORMATS);
+  if (!d.isValid()) {
+    const nativeDate = new Date(dateStr);
+    if (!isNaN(nativeDate.getTime())) {
+      d = dayjs(nativeDate);
+    }
+  }
+  return d.isValid() ? d.valueOf() : null;
+}
+
+function cleanPayeeName(description) {
+  if (!description) return "Unknown";
+  
+  let cleaned = String(description);
+
+  const prefixRegex = /^(UPI[\-\/]|NEFT[\-\/]|IMPS[\-\/]|RTGS[\-\/]|POS[\-\/]|ACH[\-\/]|MMT\/|TP\/|P2A\/|P2M\/|TSF\/)/i;
+  let prevCleaned;
+  do {
+    prevCleaned = cleaned;
+    cleaned = cleaned.replace(prefixRegex, '');
+  } while (cleaned !== prevCleaned);
+
+  const refRegex = /(?:\/REF|\/Ref|REF NO|TRAN|\/[A-Z0-9]{8,}).*$/i;
+  cleaned = cleaned.replace(refRegex, '');
+
+  const vpaRegex = /@[A-Z0-9]+/i;
+  cleaned = cleaned.replace(vpaRegex, '');
+
+  cleaned = cleaned.replace(/[\/\-]+/g, ' ').trim();
+
+  function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(txt) {
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+  }
+  cleaned = toTitleCase(cleaned);
+
+  if (cleaned.length < 3) {
+    let fallback = String(description).trim();
+    if (fallback.length > 30) fallback = fallback.substring(0, 30) + '...';
+    return toTitleCase(fallback);
+  }
+
+  return cleaned;
+}
+
 export function analyzeTransactions(transactions) {
   let totalIn = 0;
   let totalOut = 0;
@@ -6,28 +61,44 @@ export function analyzeTransactions(transactions) {
   const dailySpending = {};
   const payeeFrequency = {};
 
+  const incomeCategorySpending = {};
+  const dailyIncomeSpending = {};
+  const incomeFrequency = {};
+
   transactions.forEach(t => {
     const amount = Math.abs(Number(t.amount || 0));
     const type = String(t.type || 'debit').toLowerCase();
     
     if (type === 'credit' || type === 'cr') {
       totalIn += amount;
+
+      const cat = t.category || 'Other';
+      incomeCategorySpending[cat] = (incomeCategorySpending[cat] || 0) + amount;
+      
+      const date = t.date;
+      if (date) {
+        dailyIncomeSpending[date] = (dailyIncomeSpending[date] || 0) + amount;
+      }
+      
+      const cleanDesc = cleanPayeeName(t.description);
+      if (!incomeFrequency[cleanDesc]) {
+        incomeFrequency[cleanDesc] = { name: cleanDesc, count: 0, totalAmount: 0 };
+      }
+      incomeFrequency[cleanDesc].count += 1;
+      incomeFrequency[cleanDesc].totalAmount += amount;
+
     } else if (type === 'debit' || type === 'dr') {
       totalOut += amount;
       
-      // Category aggregation
       const cat = t.category || 'Other';
       categorySpending[cat] = (categorySpending[cat] || 0) + amount;
       
-      // Daily aggregation
       const date = t.date;
       if (date) {
         dailySpending[date] = (dailySpending[date] || 0) + amount;
       }
       
-      // Track top payees (simplified by using description as payee name)
-      // A more robust implementation might clean up standard prefixes like "UPI-"
-      const cleanDesc = t.description.replace(/^(UPI-|POS-)/i, '').split('/')[0].trim();
+      const cleanDesc = cleanPayeeName(t.description);
       if (!payeeFrequency[cleanDesc]) {
         payeeFrequency[cleanDesc] = { name: cleanDesc, count: 0, totalAmount: 0 };
       }
@@ -36,24 +107,31 @@ export function analyzeTransactions(transactions) {
     }
   });
 
-  // Format pie chart data
   const pieData = Object.entries(categorySpending).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
+  const incomeData = Object.entries(incomeCategorySpending).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
 
-  // Format bar chart data. Assuming date is DD-MM-YYYY
-  const barData = Object.entries(dailySpending)
+  const formatDailyData = (dailyMap) => Object.entries(dailyMap)
     .map(([date, amount]) => {
-      // Very basic date parsing for sorting purposes DD-MM-YYYY
-      const parts = date.split('-');
-      const sortKey = parts.length === 3 ? `${parts[2]}${parts[1]}${parts[0]}` : date;
-      return { date, amount, sortKey };
+      return { date, amount, timestamp: parseDateRobust(date) };
     })
-    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
-    .map(({ date, amount }) => ({ date, amount }));
+    .sort((a, b) => {
+      if (a.timestamp === null && b.timestamp === null) return 0;
+      if (a.timestamp === null) return 1;
+      if (b.timestamp === null) return -1;
+      return a.timestamp - b.timestamp;
+    })
+    .map(({ date, amount, timestamp }) => ({ date, amount, timestamp }));
 
-  // Top payees
+  const barData = formatDailyData(dailySpending);
+  const dailyIncomeData = formatDailyData(dailyIncomeSpending);
+
   const topPayees = Object.values(payeeFrequency)
     .sort((a, b) => b.totalAmount - a.totalAmount)
     .slice(0, 10);
+    
+  const topIncomeSources = Object.values(incomeFrequency)
+    .sort((a, b) => b.totalAmount - a.totalAmount)
+    .slice(0, 5);
 
   return {
     summary: {
@@ -64,6 +142,9 @@ export function analyzeTransactions(transactions) {
     },
     categoryData: pieData,
     dailyData: barData,
-    topPayees: topPayees
+    topPayees: topPayees,
+    incomeData,
+    dailyIncomeData,
+    topIncomeSources
   };
 }

@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+console.log("TESTING ENV VAR:", import.meta.env.VITE_GEMINI_API_KEY);
+
 // In a real production app, you would pass this through your backend to keep it secure.
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const isAIEnabled = import.meta.env.VITE_ENABLE_AI === 'true';

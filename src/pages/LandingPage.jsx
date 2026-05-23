@@ -173,7 +173,7 @@ export default function LandingPage() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <ThemeToggle />
             <button 
-              onClick={() => navigate('/app')}
+              onClick={() => navigate('/login')}
               className="px-5 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full text-sm font-bold hover:scale-105 transition-transform shadow-md"
             >
               Open App →
@@ -196,7 +196,7 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
               <button 
-                onClick={() => navigate('/app/statement-analytics/upload')}
+                onClick={() => navigate('/login')}
                 className="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-rose-600 to-indigo-600 text-white rounded-[2rem] font-bold text-xl hover:opacity-90 transition-all shadow-xl shadow-indigo-500/20 flex items-center justify-center group"
               >
                 Start Exploring
@@ -212,8 +212,8 @@ export default function LandingPage() {
 
             <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 text-sm font-bold text-slate-400 uppercase tracking-widest">
               <span className="flex items-center"><LockKeyhole className="w-5 h-5 mr-3 text-emerald-500" /> 100% Private</span>
-              <span className="flex items-center"><UserX className="w-5 h-5 mr-3 text-teal-500" /> No Signup</span>
-              <span className="flex items-center"><Star className="w-5 h-5 mr-3 text-amber-500" /> Completely Free</span>
+              <span className="flex items-center"><UserX className="w-5 h-5 mr-3 text-teal-500" /> Quick Google Login</span>
+              <span className="flex items-center"><Star className="w-5 h-5 mr-3 text-amber-500" /> Free to Start</span>
               <span className="flex items-center">🇮🇳 Built for India</span>
             </div>
           </motion.div>
@@ -453,7 +453,7 @@ export default function LandingPage() {
                 Just drag and drop your PDF statement (HDFC, SBI, ICICI, Axis — any bank). Our local AI does the rest.
               </p>
               <button 
-                onClick={() => navigate('/app/statement-analytics/upload')}
+                onClick={() => navigate('/login')}
                 className="px-10 py-4 bg-primary-600 text-white rounded-full font-bold text-lg hover:bg-primary-700 transition-all flex items-center shadow-lg"
               >
                 Try It Free →
@@ -501,7 +501,7 @@ export default function LandingPage() {
             <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
               <FAQItem 
                 question="Is FinSight really free?" 
-                answer="Yes. All 8 tools are completely free to use. We may introduce optional premium features later but core tools stay free forever. Our goal is to empower Indians with financial clarity." 
+                answer="Yes. The free tier gives you 2 uploads per month and access to all basic calculators. For unlimited uploads and advanced AI insights, our Pro plan is available for just ₹199/month." 
               />
               <FAQItem 
                 question="Is my bank statement data safe?" 
@@ -536,7 +536,7 @@ export default function LandingPage() {
               <p className="text-2xl text-white/80 mb-16 font-medium italic">"Free. Private. No signup. Takes 2 minutes."</p>
               
               <button 
-                onClick={() => navigate('/app')}
+                onClick={() => navigate('/login')}
                 className="px-12 py-6 bg-white text-slate-900 rounded-[2.5rem] font-black text-2xl hover:scale-105 transition-transform shadow-2xl flex items-center justify-center mx-auto group"
               >
                 Open FinSight Free

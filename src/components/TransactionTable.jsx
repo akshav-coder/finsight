@@ -1,6 +1,24 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Filter, ArrowDown, ArrowUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Filter, ArrowDown, ArrowUp, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+dayjs.extend(customParseFormat);
+
+const DATE_FORMATS = ['DD-MM-YYYY', 'YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD MMM YYYY', 'DD-MMM-YYYY'];
+
+function parseDateRobust(dateStr) {
+  if (!dateStr) return null;
+  let d = dayjs(dateStr, DATE_FORMATS);
+  if (!d.isValid()) {
+    const nativeDate = new Date(dateStr);
+    if (!isNaN(nativeDate.getTime())) {
+      d = dayjs(nativeDate);
+    }
+  }
+  return d.isValid() ? d.valueOf() : null;
+}
 
 export default function TransactionTable({ transactions }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -10,11 +28,42 @@ export default function TransactionTable({ transactions }) {
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || 'all');
   const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
   // Extract unique categories from transactions for the filter dropdown
   const categories = useMemo(() => {
     const cats = new Set(transactions.map(t => t.category || 'Other'));
     return ['all', ...Array.from(cats).sort()];
   }, [transactions]);
+
+  // Reset to page 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, categoryFilter]);
+
+  const handleExportCSV = () => {
+    if (!transactions || transactions.length === 0) return;
+    
+    const headers = ['Date', 'Description', 'Category', 'Type', 'Amount'];
+    const rows = transactions.map(t => [
+      t.date || '',
+      `"${(t.description || '').replace(/"/g, '""')}"`,
+      t.category || '',
+      t.type || '',
+      t.amount || 0
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'finsight-transactions.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -45,6 +94,17 @@ export default function TransactionTable({ transactions }) {
           ? Number(aValue) - Number(bValue)
           : Number(bValue) - Number(aValue);
       }
+      
+      if (sortConfig.key === 'date') {
+        const aTime = parseDateRobust(aValue);
+        const bTime = parseDateRobust(bValue);
+        
+        if (aTime === null && bTime === null) return 0;
+        if (aTime === null) return 1;
+        if (bTime === null) return -1;
+        
+        return sortConfig.direction === 'asc' ? aTime - bTime : bTime - aTime;
+      }
 
       const aStr = String(aValue || '').toLowerCase();
       const bStr = String(bValue || '').toLowerCase();
@@ -56,6 +116,17 @@ export default function TransactionTable({ transactions }) {
 
     return result;
   }, [transactions, searchTerm, filterType, categoryFilter, sortConfig]);
+
+  // Pagination Logic
+  const totalRecords = filteredAndSortedTransactions.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+  const startIndex = (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalRecords);
+
+  const paginatedTransactions = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredAndSortedTransactions.slice(start, start + pageSize);
+  }, [filteredAndSortedTransactions, currentPage, pageSize]);
 
   const SortIcon = ({ columnKey }) => {
     if (sortConfig.key !== columnKey) return <ArrowDown className="w-3 h-3 ml-1 opacity-20" />;
@@ -70,7 +141,7 @@ export default function TransactionTable({ transactions }) {
         <div>
           <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Activity Ledger</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Showing {filteredAndSortedTransactions.length} of {transactions.length} records
+            Showing {totalRecords === 0 ? 0 : startIndex}–{endIndex} of {totalRecords} records
           </p>
         </div>
         
@@ -87,6 +158,15 @@ export default function TransactionTable({ transactions }) {
           </div>
           
           <div className="flex gap-2">
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-semibold transition-colors shadow-sm"
+              title="Export Full History to CSV"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </button>
+
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
@@ -153,7 +233,7 @@ export default function TransactionTable({ transactions }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredAndSortedTransactions.length === 0 ? (
+            {paginatedTransactions.length === 0 ? (
               <tr>
                 <td colSpan="4" className="py-20 text-center text-slate-500 dark:text-slate-400">
                   <div className="flex flex-col items-center">
@@ -174,7 +254,7 @@ export default function TransactionTable({ transactions }) {
                 </td>
               </tr>
             ) : (
-              filteredAndSortedTransactions.map((t, i) => (
+              paginatedTransactions.map((t, i) => (
                 <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition duration-150">
                   <td className="py-4 px-6 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap font-medium font-mono">{t.date}</td>
                   <td className="py-4 px-6 text-sm text-slate-800 dark:text-slate-200">
@@ -204,6 +284,49 @@ export default function TransactionTable({ transactions }) {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalRecords > 0 && (
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-slate-900/50 transition-colors duration-200">
+          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+            <span>Show</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+            >
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>rows</span>
+          </div>
+
+          <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+            Page {currentPage} of {totalPages}
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

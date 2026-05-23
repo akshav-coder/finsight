@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { DataProvider, useData } from './context/DataContext';
+import { useAuth } from './context/AuthContext';
 
 import LandingPage from './pages/LandingPage';
 import AppLayout from './layouts/AppLayout';
@@ -13,11 +14,26 @@ import DebtPayoffPlanner from './pages/DebtPayoffPlanner';
 import TaxSaver from './pages/TaxSaver';
 import SIPCalculator from './pages/SIPCalculator';
 import StatementHub from './pages/StatementHub';
+import PricingPage from './pages/PricingPage';
 
 import UploadView from './pages/UploadView';
 import Overview from './pages/Overview';
 import Analytics from './pages/Analytics';
 import TransactionsList from './pages/TransactionsList';
+import LoginPage from './pages/LoginPage';
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return null;
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+}
 
 export default function AppRouter() {
   return (
@@ -25,9 +41,14 @@ export default function AppRouter() {
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
 
         {/* App Routes Wrapper */}
-        <Route path="/app" element={<AppLayout />}>
+        <Route path="/app" element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Dashboard />} />
           <Route path="loan" element={<LoanSimplifier />} />
           <Route path="credit-card" element={<CreditCardAnalyzer />} />
@@ -36,6 +57,7 @@ export default function AppRouter() {
           <Route path="debt-planner" element={<DebtPayoffPlanner />} />
           <Route path="tax-saver" element={<TaxSaver />} />
           <Route path="sip-calculator" element={<SIPCalculator />} />
+          <Route path="pricing" element={<PricingPage />} />
           
           {/* Statement Hub and its sub-routes using absolute paths for matching */}
           <Route path="statement-analytics" element={<StatementHub />}>
