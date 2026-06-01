@@ -20,13 +20,11 @@ export function avalancheSchedule(debts, extraPayment) {
   
   while (remaining.some(d => d.balance > 0) && month < 600) {
     month++;
-    let monthlyInterest = 0;
     
     // 1. Calculate interest and pay minimums on all active debts
     remaining.forEach(debt => {
       if (debt.balance <= 0) return;
       const interest = debt.balance * (debt.rate / 100 / 12);
-      monthlyInterest += interest;
       totalInterest += interest;
       
       const principalFromMin = Math.min(debt.minPayment - interest, debt.balance);
@@ -75,12 +73,10 @@ export function snowballSchedule(debts, extraPayment) {
   
   while (remaining.some(d => d.balance > 0) && month < 600) {
     month++;
-    let monthlyInterest = 0;
     
     remaining.forEach(debt => {
       if (debt.balance <= 0) return;
       const interest = debt.balance * (debt.rate / 100 / 12);
-      monthlyInterest += interest;
       totalInterest += interest;
       
       const principalFromMin = Math.min(debt.minPayment - interest, debt.balance);

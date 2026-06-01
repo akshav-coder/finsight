@@ -27,6 +27,25 @@ export default function LoanInputForm({ loanData, setLoanData }) {
       <div className="space-y-5">
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            Loan Type
+          </label>
+          <select
+            name="loanType"
+            value={loanData.loanType || ''}
+            onChange={(e) => setLoanData(prev => ({ ...prev, loanType: e.target.value }))}
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+          >
+            <option value="" disabled>Select Loan Type</option>
+            <option value="Home Loan">Home Loan</option>
+            <option value="Car Loan">Car Loan</option>
+            <option value="Personal Loan">Personal Loan</option>
+            <option value="Education Loan">Education Loan</option>
+            <option value="Business Loan">Business Loan</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
             Loan Amount (₹)
           </label>
           <input
@@ -35,8 +54,22 @@ export default function LoanInputForm({ loanData, setLoanData }) {
             value={loanData.amount || ''}
             onChange={handleChange}
             placeholder="e.g. 50,00,000"
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-mono text-lg font-bold"
+            className="w-full px-4 py-3 mb-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-mono text-lg font-bold"
           />
+          <input
+            type="range"
+            min="100000"
+            max="50000000"
+            step="100000"
+            name="amount"
+            value={loanData.amount || 100000}
+            onChange={handleChange}
+            className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary-500"
+          />
+          <div className="flex justify-between text-xs text-slate-400 mt-1 font-bold">
+            <span>1L</span>
+            <span>5Cr</span>
+          </div>
         </div>
 
         <div>
@@ -124,6 +157,24 @@ export default function LoanInputForm({ loanData, setLoanData }) {
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-mono"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            Already Paid EMIs
+          </label>
+          <input
+            type="number"
+            min="0"
+            name="paidEmis"
+            value={loanData.paidEmis || ''}
+            onChange={handleChange}
+            placeholder="e.g. 12"
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-mono"
+          />
+          <p className="text-[10px] text-slate-500 mt-2">
+            Fill this if you are tracking an existing loan
+          </p>
         </div>
 
         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">

@@ -22,7 +22,7 @@ function cleanPayeeName(description) {
   
   let cleaned = String(description);
 
-  const prefixRegex = /^(UPI[\-\/]|NEFT[\-\/]|IMPS[\-\/]|RTGS[\-\/]|POS[\-\/]|ACH[\-\/]|MMT\/|TP\/|P2A\/|P2M\/|TSF\/)/i;
+  const prefixRegex = /^(UPI[-/]|NEFT[-/]|IMPS[-/]|RTGS[-/]|POS[-/]|ACH[-/]|MMT\/|TP\/|P2A\/|P2M\/|TSF\/)/i;
   let prevCleaned;
   do {
     prevCleaned = cleaned;
@@ -35,7 +35,8 @@ function cleanPayeeName(description) {
   const vpaRegex = /@[A-Z0-9]+/i;
   cleaned = cleaned.replace(vpaRegex, '');
 
-  cleaned = cleaned.replace(/[\/\-]+/g, ' ').trim();
+  // Split and join to clear slashes and hyphens without complex/unstable regex escapes
+  cleaned = cleaned.split('/').join(' ').split('-').join(' ').trim();
 
   function toTitleCase(str) {
     return str.replace(/\w\S*/g, function(txt) {

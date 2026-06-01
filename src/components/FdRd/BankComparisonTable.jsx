@@ -151,6 +151,10 @@ export default function BankComparisonTable({ type, userRate, tenure, amount }) 
           </div>
         </div>
       )}
+
+      <div className="mt-4 text-center">
+        <p className="text-[10px] text-slate-400 italic">Rates are indicative as of 2025. Please verify with your bank before investing.</p>
+      </div>
     </div>
   );
 }

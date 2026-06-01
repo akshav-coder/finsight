@@ -46,17 +46,34 @@ export default function RdInputForm({ data, setData }) {
 
       {/* Tenure */}
       <div className="space-y-2">
-        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Tenure (Months)</label>
-        <input
-          type="number"
-          name="months"
-          value={data.months}
-          onChange={handleChange}
-          className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all"
-        />
-        <div className="flex justify-between px-1">
-          <p className="text-[10px] text-slate-400 font-medium">6 months to 120 months.</p>
-          <p className="text-[10px] text-emerald-600 font-bold uppercase">{Math.floor(data.months/12)}y {data.months%12}m</p>
+        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Tenure</label>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <p className="text-[10px] text-slate-400 pl-1 font-bold uppercase">Years</p>
+            <input
+              type="number"
+              name="years"
+              min="0"
+              value={data.years}
+              onChange={handleChange}
+              className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-center"
+            />
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] text-slate-400 pl-1 font-bold uppercase">Months</p>
+            <input
+              type="number"
+              name="months"
+              min="0"
+              max="11"
+              value={data.months}
+              onChange={handleChange}
+              className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all text-center"
+            />
+          </div>
+        </div>
+        <div className="flex justify-between px-1 mt-1">
+          <p className="text-[10px] text-slate-400 font-medium">Min 6 months.</p>
         </div>
       </div>
 

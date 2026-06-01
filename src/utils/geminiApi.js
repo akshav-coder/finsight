@@ -1,19 +1,51 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { scrubPII } from './privacyScrubber';
 
 console.log("TESTING ENV VAR:", import.meta.env.VITE_GEMINI_API_KEY);
 
-// In a real production app, you would pass this through your backend to keep it secure.
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const isAIEnabled = import.meta.env.VITE_ENABLE_AI === 'true';
 
+/**
+ * Extracts transactions from a bank statement.
+ * In production or if the local API key is missing, it proxies requests through Vercel serverless functions.
+ * In local development (with key), it falls back to the direct browser SDK for convenience.
+ * @param {string} text Raw statement text
+ * @returns {Promise<Array>} Transaction array
+ */
 export async function parseStatementWithGemini(text) {
   if (!isAIEnabled) {
     throw new Error("AI Parsing is temporarily disabled in this version.");
   }
-  if (!apiKey) {
-    throw new Error("VITE_GEMINI_API_KEY is not set in your environment variables. Please add it to .env files and restart the server.");
+
+  // Scrub Personal Identifiable Information (PII) before transmission to protect privacy
+  const scrubbedText = scrubPII(text);
+
+  // 1. In Production, OR if VITE_GEMINI_API_KEY is not defined locally, fetch from secure Vercel API proxy
+  if (import.meta.env.PROD || !apiKey) {
+    try {
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: scrubbedText }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server responded with status ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Backend Proxy Gemini Error:", error);
+      throw new Error(`AI Parsing Error: ${error.message}`);
+    }
   }
 
+  // 2. Local Development fallback (if VITE_GEMINI_API_KEY is configured in .env files)
+  console.log("Using direct client-side SDK local fallback parser (development mode)");
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ 
     model: "gemini-2.5-flash",
@@ -28,16 +60,14 @@ IMPORTANT: 'type' MUST be either 'credit' (money in/salary/refunds) or 'debit' (
 The 'amount' should ALWAYS be a positive number. The 'type' will indicate the direction.
 
 Bank statement text:
-${text}`;
+${scrubbedText}`;
 
-  function cleanJSON(text) {
-    // Remove markdown code blocks
-    text = text.replace(/```json/gi, '').replace(/```/g, '');
-    // Find the first [ and last ] and extract only that
-    const start = text.indexOf('[');
-    const end = text.lastIndexOf(']');
+  function cleanJSON(txt) {
+    txt = txt.replace(/```json/gi, '').replace(/```/g, '');
+    const start = txt.indexOf('[');
+    const end = txt.lastIndexOf(']');
     if (start === -1 || end === -1) throw new Error('No JSON array found');
-    return text.slice(start, end + 1).trim();
+    return txt.slice(start, end + 1).trim();
   }
 
   try {
@@ -51,14 +81,43 @@ ${text}`;
   }
 }
 
+/**
+ * Gets open-ended advisory responses from Gemini.
+ * Proxies requests securely through Vercel serverless functions in production.
+ * @param {string} prompt Open-ended prompt for Gemini
+ * @returns {Promise<string>} Gemini response text
+ */
 export async function getGeminiResponse(prompt) {
   if (!isAIEnabled) {
     return "AI insights are coming soon to the live version of FinSight! Stay tuned.";
   }
-  if (!apiKey) {
-    throw new Error("VITE_GEMINI_API_KEY is not set.");
+
+  // 1. In Production, OR if VITE_GEMINI_API_KEY is not defined locally, fetch from secure Vercel API proxy
+  if (import.meta.env.PROD || !apiKey) {
+    try {
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.response;
+    } catch (error) {
+      console.error("Backend Proxy Gemini Advisor Error:", error);
+      throw new Error(`AI Advisor Error: ${error.message}`);
+    }
   }
 
+  // 2. Local Development fallback (if VITE_GEMINI_API_KEY is configured in .env files)
+  console.log("Using direct client-side SDK local fallback advisor (development mode)");
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -126,7 +185,7 @@ To achieve this at an expected return of ${rate}%, they need a Required monthly 
   }
 
   return `You are a friendly wealth coach for young Indians.
-\${baseContext}
+${baseContext}
 
 Write 3-4 lines max:
 1. Is this a realistic and good plan?

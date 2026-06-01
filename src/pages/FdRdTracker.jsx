@@ -33,13 +33,16 @@ export default function FdRdTracker() {
     compounding: 4,
     payoutType: 'Cumulative',
     payoutFrequency: 'Monthly',
-    taxSlab: 0
+    taxSlab: 0,
+    startMonth: new Date().getMonth(),
+    startYear: new Date().getFullYear()
   });
 
   // RD State
   const [rdData, setRdData] = useState({
     monthlyAmount: 0,
     rate: 0,
+    years: 0,
     months: 0,
     days: 0,
     taxSlab: 0
@@ -72,15 +75,16 @@ export default function FdRdTracker() {
 
   // Derived RD Results
   const rdResults = useMemo(() => {
-    const totalYears = totalYearsFromPeriod(0, rdData.months, rdData.days || 0);
-    const maturity = calculateRDMaturity(rdData.monthlyAmount, rdData.rate, rdData.months);
-    const totalInvested = rdData.monthlyAmount * rdData.months;
+    const totalMonths = (rdData.years || 0) * 12 + (rdData.months || 0);
+    const totalYears = totalYearsFromPeriod(0, totalMonths, rdData.days || 0);
+    const maturity = calculateRDMaturity(rdData.monthlyAmount, rdData.rate, totalMonths);
+    const totalInvested = rdData.monthlyAmount * totalMonths;
     const grossInterest = maturity - totalInvested;
     const annualInterest = totalYears > 0 ? (grossInterest / totalYears) : grossInterest;
     const taxImpact = calculatePostTaxReturns(grossInterest, rdData.taxSlab, annualInterest);
-    const schedule = generateRDSchedule(rdData.monthlyAmount, rdData.rate, rdData.months);
+    const schedule = generateRDSchedule(rdData.monthlyAmount, rdData.rate, totalMonths);
 
-    return { maturityAmount: maturity, totalInvested, grossInterest, taxImpact, schedule, totalYears };
+    return { maturityAmount: maturity, totalInvested, grossInterest, taxImpact, schedule, totalYears, totalMonths };
   }, [rdData]);
 
   return (
@@ -169,8 +173,8 @@ export default function FdRdTracker() {
           <BankComparisonTable 
             type={activeTab} 
             userRate={activeTab === 'FD' ? fdData.rate : rdData.rate} 
-            tenure={activeTab === 'FD' ? fdResults.totalYears : (rdData.months/12)}
-            amount={activeTab === 'FD' ? fdData.amount : rdData.monthlyAmount * rdData.months}
+            tenure={activeTab === 'FD' ? fdResults.totalYears : rdResults.totalYears}
+            amount={activeTab === 'FD' ? fdData.amount : rdData.monthlyAmount * rdResults.totalMonths}
           />
         </div>
       </div>

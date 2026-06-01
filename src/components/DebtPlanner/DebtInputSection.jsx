@@ -29,6 +29,7 @@ const DEBT_TYPES = [
 
 export default function DebtInputSection({ debts, setDebts, extraPayment, setExtraPayment, totalMinPayment }) {
   const [isAdding, setIsAdding] = useState(false);
+  const [editDebtId, setEditDebtId] = useState(null);
   const [newDebt, setNewDebt] = useState({
     name: '',
     type: 'Credit Card',
@@ -37,25 +38,39 @@ export default function DebtInputSection({ debts, setDebts, extraPayment, setExt
     minPayment: ''
   });
 
+  const resetForm = () => {
+    setNewDebt({ name: '', type: 'Credit Card', balance: '', rate: '', minPayment: '' });
+    setIsAdding(false);
+    setEditDebtId(null);
+  };
+
+  const handleEditDebt = (debt) => {
+    setEditDebtId(debt.id);
+    setNewDebt(debt);
+    setIsAdding(true);
+  };
+
   const handleAddDebt = () => {
     if (!newDebt.name || !newDebt.balance || !newDebt.rate || !newDebt.minPayment) return;
     
-    setDebts([...debts, { 
-      ...newDebt, 
-      id: Date.now().toString(),
-      balance: Number(newDebt.balance),
-      rate: Number(newDebt.rate),
-      minPayment: Number(newDebt.minPayment)
-    }]);
+    if (editDebtId) {
+      setDebts(debts.map(d => d.id === editDebtId ? {
+        ...newDebt,
+        balance: Number(newDebt.balance),
+        rate: Number(newDebt.rate),
+        minPayment: Number(newDebt.minPayment)
+      } : d));
+    } else {
+      setDebts([...debts, { 
+        ...newDebt, 
+        id: Date.now().toString(),
+        balance: Number(newDebt.balance),
+        rate: Number(newDebt.rate),
+        minPayment: Number(newDebt.minPayment)
+      }]);
+    }
     
-    setNewDebt({
-      name: '',
-      type: 'Credit Card',
-      balance: '',
-      rate: '',
-      minPayment: ''
-    });
-    setIsAdding(false);
+    resetForm();
   };
 
   const removeDebt = (id) => {
@@ -96,6 +111,12 @@ export default function DebtInputSection({ debts, setDebts, extraPayment, setExt
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Min Payment</div>
                   <div className="text-sm font-black text-slate-900 dark:text-white">{formatINR(debt.minPayment)}</div>
                 </div>
+                <button 
+                  onClick={() => handleEditDebt(debt)}
+                  className="p-2 text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
                 <button 
                   onClick={() => removeDebt(debt.id)}
                   className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100"
@@ -168,10 +189,10 @@ export default function DebtInputSection({ debts, setDebts, extraPayment, setExt
                   onClick={handleAddDebt}
                   className="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-black transition-all shadow-lg active:scale-95"
                 >
-                  Save Debt
+                  {editDebtId ? 'Save Changes' : 'Save Debt'}
                 </button>
                 <button 
-                  onClick={() => setIsAdding(false)}
+                  onClick={resetForm}
                   className="px-4 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-black"
                 >
                   Cancel

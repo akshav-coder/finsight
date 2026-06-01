@@ -13,6 +13,34 @@ export default function FdInputForm({ data, setData }) {
 
   return (
     <div className="space-y-5">
+      {/* Start Date */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Start Date</label>
+        <div className="flex gap-2">
+          <select
+            name="startMonth"
+            value={data.startMonth}
+            onChange={handleChange}
+            className="w-1/2 bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer"
+          >
+            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => (
+              <option key={i} value={i}>{m}</option>
+            ))}
+          </select>
+          <select
+            name="startYear"
+            value={data.startYear}
+            onChange={handleChange}
+            className="w-1/2 bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer"
+          >
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(offset => {
+              const y = new Date().getFullYear() + offset;
+              return <option key={y} value={y}>{y}</option>;
+            })}
+          </select>
+        </div>
+      </div>
+
       {/* Deposit Amount */}
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Deposit Amount (₹)</label>

@@ -9,10 +9,12 @@ import { calculateMinPaymentSchedule, calculateFixedPaymentSchedule } from '../u
 
 export default function CreditCardAnalyzer() {
   const [cardData, setCardData] = useState({
-    balance: 50000,
-    rate: 36,
-    minPercent: 5,
-    plannedPayment: 3000,
+    cardName: '',
+    balance: 0,
+    rate: 0,
+    minPercent: 0,
+    plannedPayment: 0,
+    aggressivePayment: 0,
     limit: 0
   });
 
@@ -20,7 +22,7 @@ export default function CreditCardAnalyzer() {
   const results = useMemo(() => {
     const minSchedule = calculateMinPaymentSchedule(cardData.balance, cardData.rate, cardData.minPercent);
     const plannedSchedule = calculateFixedPaymentSchedule(cardData.balance, cardData.rate, cardData.plannedPayment);
-    const aggressiveSchedule = calculateFixedPaymentSchedule(cardData.balance, cardData.rate, Math.max(cardData.plannedPayment, 1000) + 2000);
+    const aggressiveSchedule = calculateFixedPaymentSchedule(cardData.balance, cardData.rate, cardData.aggressivePayment || cardData.plannedPayment + 2000);
 
     return {
       minSchedule,
@@ -29,13 +31,21 @@ export default function CreditCardAnalyzer() {
     };
   }, [cardData]);
 
+  // Calculate Debt Free Date
+  const debtFreeDate = useMemo(() => {
+    if (!results.plannedSchedule || results.plannedSchedule.length === 0) return null;
+    const date = new Date();
+    date.setMonth(date.getMonth() + results.plannedSchedule.length);
+    return date.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+  }, [results.plannedSchedule]);
+
   // Check if payment covers interest
   const monthlyInterest = (cardData.balance * (cardData.rate / 12 / 100));
   const isTrap = cardData.plannedPayment <= monthlyInterest && cardData.balance > 0;
 
   return (
     <div className="animate-fade-in-up max-w-7xl mx-auto w-full pb-20">
-      <div className="mb-8 flex justify-between items-start">
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight transition-colors">
             Credit Card <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-600">Analyzer</span>
@@ -44,25 +54,36 @@ export default function CreditCardAnalyzer() {
             Escape the minimum payment trap and strategize your payoff.
           </p>
         </div>
-        {cardData.limit > 0 && (
-          <div className="glass-panel px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-800">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Utilization</span>
-            <div className="flex items-center space-x-2">
-              <div className="w-24 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-500 ${
-                    (cardData.balance / cardData.limit) > 0.75 ? 'bg-rose-500' : 
-                    (cardData.balance / cardData.limit) > 0.5 ? 'bg-orange-500' : 'bg-emerald-500'
-                  }`}
-                  style={{ width: `${Math.min(100, (cardData.balance / cardData.limit) * 100)}%` }}
-                ></div>
-              </div>
-              <span className="text-sm font-black text-slate-700 dark:text-slate-200">
-                {Math.round((cardData.balance / cardData.limit) * 100)}%
+        
+        <div className="flex flex-wrap items-center gap-4">
+          {debtFreeDate && (
+            <div className="glass-panel px-5 py-2 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10">
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block">Debt Free By</span>
+              <span className="text-lg font-black text-emerald-700 dark:text-emerald-300">
+                {debtFreeDate}
               </span>
             </div>
-          </div>
-        )}
+          )}
+          {cardData.limit > 0 && (
+            <div className="glass-panel px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Utilization</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-24 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-500 ${
+                      (cardData.balance / cardData.limit) > 0.75 ? 'bg-rose-500' : 
+                      (cardData.balance / cardData.limit) > 0.5 ? 'bg-orange-500' : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${Math.min(100, (cardData.balance / cardData.limit) * 100)}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm font-black text-slate-700 dark:text-slate-200">
+                  {Math.round((cardData.balance / cardData.limit) * 100)}%
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {isTrap && (

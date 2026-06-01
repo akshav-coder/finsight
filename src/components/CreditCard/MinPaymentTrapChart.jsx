@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatINR } from '../../utils/creditCardCalculations';
 
 export default function MinPaymentTrapChart({ minSchedule, plannedSchedule }) {
+  const [showFull, setShowFull] = useState(false);
+
   // Combine data for charting
   const data = [];
-  const maxMonths = 24; // Show first 2 years for dramatic effect
+  const maxMonths = showFull ? Math.max(minSchedule.length, plannedSchedule.length) : 24; 
   
   for (let i = 0; i < maxMonths; i++) {
     data.push({
@@ -38,6 +41,12 @@ export default function MinPaymentTrapChart({ minSchedule, plannedSchedule }) {
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Minimum Payment Trap</h3>
           <p className="text-xs text-rose-500 font-bold mt-1 uppercase tracking-tighter">See how long you're trapped if you pay only minimum</p>
         </div>
+        <button 
+          onClick={() => setShowFull(!showFull)}
+          className="mt-4 md:mt-0 px-4 py-2 text-xs font-bold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+        >
+          {showFull ? 'Show 24 Months' : 'Show Full Timeline'}
+        </button>
       </div>
 
       <div className="h-[350px]">

@@ -76,7 +76,7 @@ function processExcel(file) {
         reject(new Error("Failed to parse Excel file: " + err.message));
       }
     };
-    reader.onerror = (e) => reject(new Error("File read error"));
+    reader.onerror = () => reject(new Error("File read error"));
     reader.readAsArrayBuffer(file);
   });
 }
@@ -127,7 +127,7 @@ function readFileAsText(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = (e) => reject(new Error("File read error"));
+    reader.onerror = () => reject(new Error("File read error"));
     reader.readAsText(file);
   });
 }

@@ -63,9 +63,7 @@ export default function TaxSaver() {
         </div>
       </div>
       
-      <RegimeRecommendation taxAnalysis={taxAnalysis} />
-
-      <div className="flex flex-col xl:flex-row gap-8">
+      <div className="flex flex-col xl:flex-row gap-8 mt-6">
         
         {/* Left Column: Inputs */}
         <div className="w-full xl:w-[400px] flex-shrink-0 space-y-6">
@@ -74,6 +72,16 @@ export default function TaxSaver() {
 
         {/* Right Column: Dashboard & Advice */}
         <div className="flex-1 flex flex-col space-y-8 min-w-0">
+           {inputs.annualCTC === 0 ? (
+             <div className="glass-panel p-12 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-center">
+               <Receipt className="w-12 h-12 text-slate-300 mb-4" />
+               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Enter your Annual CTC to see your tax analysis</h2>
+               <p className="text-sm text-slate-500 mt-2 max-w-md">We need your income details to compare the Old and New tax regimes and provide personalized recommendations.</p>
+             </div>
+           ) : (
+             <RegimeRecommendation taxAnalysis={taxAnalysis} />
+           )}
+
            <TaxSummaryCards taxAnalysis={taxAnalysis} />
            
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

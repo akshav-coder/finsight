@@ -1,4 +1,5 @@
-import { TrendingUp, PieChart, ShieldCheck, Zap } from 'lucide-react';
+import { useMemo } from 'react';
+import { TrendingUp, PieChart, ShieldCheck, Zap, Copy } from 'lucide-react';
 import { formatINR } from '../../utils/fdRdCalculations';
 
 export default function FdSummaryCards({ results, data }) {
@@ -53,9 +54,34 @@ export default function FdSummaryCards({ results, data }) {
     }
   ];
 
+  // Calculate maturity date
+  const maturityDate = useMemo(() => {
+    if (data.startMonth === undefined || data.startYear === undefined) return '';
+    const date = new Date(data.startYear, data.startMonth, 1);
+    date.setFullYear(date.getFullYear() + (data.years || 0));
+    date.setMonth(date.getMonth() + (data.months || 0));
+    date.setDate(date.getDate() + (data.days || 0));
+    return date.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+  }, [data]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`My FD of ${formatINR(data.amount)} matures on ${maturityDate} with ${formatINR(grossInterest)} returns`);
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {cards.map((card, i) => {
+    <div className="space-y-4">
+      {data.amount > 0 && totalYears > 0 && (
+        <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+          <span className="text-sm font-bold text-emerald-800 dark:text-emerald-200">
+            Matures on: {maturityDate}
+          </span>
+          <button onClick={handleCopy} className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors" title="Copy to clipboard">
+            <Copy className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {cards.map((card, i) => {
         const Icon = card.icon;
         return (
           <div key={i} className="glass-panel p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 transition-all hover:scale-[1.02]">
@@ -76,6 +102,7 @@ export default function FdSummaryCards({ results, data }) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

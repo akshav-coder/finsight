@@ -43,24 +43,31 @@ export default function AppRouter() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
 
-        {/* App Routes Wrapper */}
-        <Route path="/app" element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }>
+        {/* App Routes Wrapper (Publicly accessible dashboard and utility calculators) */}
+        <Route path="/app" element={<AppLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="loan" element={<LoanSimplifier />} />
           <Route path="credit-card" element={<CreditCardAnalyzer />} />
           <Route path="fd-rd" element={<FdRdTracker />} />
-          <Route path="savings-advisor" element={<SavingsAdvisor />} />
+          
+          {/* Protected: AI Advisory requires Google Auth */}
+          <Route path="savings-advisor" element={
+            <ProtectedRoute>
+              <SavingsAdvisor />
+            </ProtectedRoute>
+          } />
+          
           <Route path="debt-planner" element={<DebtPayoffPlanner />} />
           <Route path="tax-saver" element={<TaxSaver />} />
           <Route path="sip-calculator" element={<SIPCalculator />} />
           <Route path="pricing" element={<PricingPage />} />
           
-          {/* Statement Hub and its sub-routes using absolute paths for matching */}
-          <Route path="statement-analytics" element={<StatementHub />}>
+          {/* Protected: Statement Hub upload and charts require Google Auth */}
+          <Route path="statement-analytics" element={
+            <ProtectedRoute>
+              <StatementHub />
+            </ProtectedRoute>
+          }>
             <Route index element={<Navigate to="/app/statement-analytics/upload" replace />} />
             <Route path="/app/statement-analytics/upload" element={<UploadView />} />
             <Route path="/app/statement-analytics/overview" element={<Overview />} />

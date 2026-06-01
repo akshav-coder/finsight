@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { 
   Briefcase, 
   Building, 
@@ -15,6 +16,17 @@ import {
 import { FINANCIAL_YEARS } from '../../utils/taxCalculations';
 
 export default function TaxInputForm({ inputs, setInputs, fy, setFy }) {
+  const [showNpsWhatIf, setShowNpsWhatIf] = useState(false);
+
+  const getMarginalTaxRate = () => {
+    const ctc = inputs.annualCTC || 0;
+    if (ctc > 1500000) return 0.30;
+    if (ctc > 1200000) return 0.20;
+    if (ctc > 1000000) return 0.15;
+    if (ctc > 700000) return 0.10;
+    return 0;
+  };
+  const npsTaxSaved = Math.round(50000 * getMarginalTaxRate());
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -132,6 +144,13 @@ export default function TaxInputForm({ inputs, setInputs, fy, setFy }) {
            <div className="col-span-2 sm:col-span-1 space-y-1 relative">
              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">EPF (₹/yr)</label>
              <input type="number" name="epf" value={inputs.epf || ''} onChange={handleChange} placeholder="0" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-bold outline-none" />
+             <button 
+               type="button"
+               onClick={() => setInputs(prev => ({ ...prev, epf: Math.round((prev.basicSalary || 0) * 12 * 0.12) }))}
+               className="text-[9px] font-bold text-primary-500 hover:text-primary-600 dark:text-primary-400 mt-1 block"
+             >
+               Auto-calculate from Basic Salary
+             </button>
            </div>
            <div className="col-span-2 sm:col-span-1 space-y-1">
              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">PPF (₹/yr)</label>
@@ -198,6 +217,20 @@ export default function TaxInputForm({ inputs, setInputs, fy, setFy }) {
                 </h3>
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Own Contribution (₹/yr)</label>
                 <input type="number" name="nps" value={inputs.nps || ''} onChange={handleChange} placeholder="Max ₹50k" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-bold outline-none" />
+                <button 
+                  type="button"
+                  onClick={() => setShowNpsWhatIf(!showNpsWhatIf)}
+                  className="text-[9px] font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 mt-1 block"
+                >
+                  What if I add ₹50,000 to NPS?
+                </button>
+                {showNpsWhatIf && npsTaxSaved > 0 && (
+                  <div className="mt-2 p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                    <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-bold">
+                      You could save an extra ₹{npsTaxSaved.toLocaleString('en-IN')} in tax
+                    </p>
+                  </div>
+                )}
              </div>
              
              <div className="col-span-2 sm:col-span-1 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-2">

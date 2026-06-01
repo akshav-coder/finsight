@@ -173,7 +173,7 @@ export default function LandingPage() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <ThemeToggle />
             <button 
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/app')}
               className="px-5 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full text-sm font-bold hover:scale-105 transition-transform shadow-md"
             >
               Open App →
@@ -196,7 +196,7 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
               <button 
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/app')}
                 className="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-rose-600 to-indigo-600 text-white rounded-[2rem] font-bold text-xl hover:opacity-90 transition-all shadow-xl shadow-indigo-500/20 flex items-center justify-center group"
               >
                 Start Exploring
@@ -453,7 +453,7 @@ export default function LandingPage() {
                 Just drag and drop your PDF statement (HDFC, SBI, ICICI, Axis — any bank). Our local AI does the rest.
               </p>
               <button 
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/app')}
                 className="px-10 py-4 bg-primary-600 text-white rounded-full font-bold text-lg hover:bg-primary-700 transition-all flex items-center shadow-lg"
               >
                 Try It Free →
@@ -536,7 +536,7 @@ export default function LandingPage() {
               <p className="text-2xl text-white/80 mb-16 font-medium italic">"Free. Private. No signup. Takes 2 minutes."</p>
               
               <button 
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/app')}
                 className="px-12 py-6 bg-white text-slate-900 rounded-[2.5rem] font-black text-2xl hover:scale-105 transition-transform shadow-2xl flex items-center justify-center mx-auto group"
               >
                 Open FinSight Free

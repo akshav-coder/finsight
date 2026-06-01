@@ -21,6 +21,20 @@ export default function CardInputForm({ cardData, setCardData }) {
       <div className="space-y-5">
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            Card Name (Optional)
+          </label>
+          <input
+            type="text"
+            name="cardName"
+            value={cardData.cardName || ''}
+            onChange={handleChange}
+            placeholder="e.g. HDFC Regalia"
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all font-semibold"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
             Outstanding Balance (₹)
           </label>
           <div className="relative">
@@ -86,6 +100,20 @@ export default function CardInputForm({ cardData, setCardData }) {
             onChange={handleChange}
             placeholder="3000"
             className="w-full px-4 py-3 bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-200/50 dark:border-emerald-800/30 rounded-xl text-emerald-700 dark:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-mono text-lg font-bold shadow-sm"
+          />
+        </div>
+
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+          <label className="block text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-2">
+            Aggressive Payment (₹)
+          </label>
+          <input
+            type="number"
+            name="aggressivePayment"
+            value={cardData.aggressivePayment || ''}
+            onChange={handleChange}
+            placeholder={cardData.plannedPayment ? `${cardData.plannedPayment + 2000}` : "5000"}
+            className="w-full px-4 py-3 bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-200/50 dark:border-indigo-800/30 rounded-xl text-indigo-700 dark:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono text-lg font-bold shadow-sm"
           />
         </div>
 

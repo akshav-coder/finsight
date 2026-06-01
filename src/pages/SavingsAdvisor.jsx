@@ -13,7 +13,9 @@ import QuickWins from '../components/SavingsAdvisor/QuickWins';
 import { calculateHealthScore, getAllocationData, calculatePotentialSavings } from '../utils/savingsAdvisorCalculations';
 
 export default function SavingsAdvisor() {
-  const { transactions, categories } = useData();
+  const { appData } = useData();
+  const transactions = useMemo(() => appData?.transactions || [], [appData?.transactions]);
+  const categories = useMemo(() => appData?.categoryData || [], [appData?.categoryData]);
   const [useStatementData, setUseStatementData] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
 
@@ -38,7 +40,10 @@ export default function SavingsAdvisor() {
   // Auto-detect statement data
   useEffect(() => {
     if (transactions && transactions.length > 0) {
-      setUseStatementData(true);
+      if (!useStatementData) {
+        setUseStatementData(true);
+      }
+      
       // Map categories to our form fields
       const categorySum = {};
       categories.forEach(cat => {
@@ -55,7 +60,7 @@ export default function SavingsAdvisor() {
         groceries: 0, // Usually hard to distinguish from food without more logic
       }));
     }
-  }, [transactions, categories]);
+  }, [transactions, categories, useStatementData]);
 
   const results = useMemo(() => {
     const score = calculateHealthScore(formData);
@@ -89,12 +94,22 @@ export default function SavingsAdvisor() {
           </p>
         </div>
 
-        {useStatementData && (
-          <div className="flex items-center space-x-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl border border-emerald-100 dark:border-emerald-800 text-sm font-bold">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Using your uploaded statement data ✓</span>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {useStatementData && (
+            <div className="flex items-center space-x-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl border border-emerald-100 dark:border-emerald-800 text-sm font-bold">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Using your uploaded statement data ✓</span>
+            </div>
+          )}
+          {showDashboard && (
+            <button 
+              onClick={() => setShowDashboard(false)}
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            >
+              Edit Inputs
+            </button>
+          )}
+        </div>
       </div>
 
       {!showDashboard && !useStatementData ? (
@@ -110,6 +125,39 @@ export default function SavingsAdvisor() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-5 flex flex-col items-center justify-center space-y-4">
               <HealthScoreCircle score={results.score} />
+              
+              <div className="flex flex-wrap justify-center gap-2 mt-2">
+                {(() => {
+                  const inc = formData.income || 1;
+                  const exp = results.totalExpenses || 1;
+                  const s = (formData.savings / inc) * 100;
+                  const e = formData.emergencyFund / exp;
+                  const d = (formData.loans / inc) * 100;
+                  const i = (formData.investments / inc) * 100;
+                  
+                  const c = (val, thresholds, reverse = false) => {
+                    const [good, ok] = thresholds;
+                    if (!reverse) {
+                      if (val >= good) return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+                      if (val >= ok) return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+                      return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800';
+                    } else {
+                      if (val <= good) return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+                      if (val <= ok) return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+                      return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800';
+                    }
+                  };
+
+                  return (
+                    <>
+                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${c(s, [20, 10])}`}>Savings Rate</span>
+                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${c(e, [6, 3])}`}>Emergency Fund</span>
+                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${c(d, [20, 40], true)}`}>Debt Ratio</span>
+                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${c(i, [15, 5])}`}>Investments</span>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
             <div className="lg:col-span-7">
                <SavingsSummaryCards results={results} formData={formData} />

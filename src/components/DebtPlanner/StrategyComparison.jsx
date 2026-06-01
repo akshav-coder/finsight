@@ -10,6 +10,12 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
   
   const savings = results.snowballInterest - results.avalancheInterest;
 
+  const getDebtFreeDate = (months) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() + months);
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  };
+
   if (!results.totalDebt || results.totalDebt === 0) {
     return (
       <div className="lg:col-span-8 glass-panel p-12 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-center space-y-4">
@@ -56,7 +62,10 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
 
         <div className="space-y-6">
           <div className="flex justify-between items-end border-b border-primary-100 dark:border-primary-900/50 pb-4">
-            <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Debt Free In</div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Debt Free In</span>
+              <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">By: {getDebtFreeDate(avalancheMonths)}</span>
+            </div>
             <div className="text-2xl font-black text-slate-900 dark:text-white uppercase">
               {formatMonths(avalancheMonths)}
             </div>
@@ -66,6 +75,13 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
             <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Total Interest Paid</div>
             <div className="text-2xl font-black text-primary-600 dark:text-primary-400">
               {formatINR(results.avalancheInterest)}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-end border-b border-primary-100 dark:border-primary-900/50 pb-4">
+            <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Total Amount Payable</div>
+            <div className="text-xl font-black text-slate-900 dark:text-white">
+              {formatINR(results.totalDebt + results.avalancheInterest)}
             </div>
           </div>
 
@@ -121,7 +137,10 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
 
         <div className="space-y-6">
           <div className="flex justify-between items-end border-b border-emerald-100 dark:border-emerald-900/50 pb-4">
-            <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Debt Free In</div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Debt Free In</span>
+              <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">By: {getDebtFreeDate(snowballMonths)}</span>
+            </div>
             <div className="text-2xl font-black text-slate-900 dark:text-white uppercase">
               {formatMonths(snowballMonths)}
             </div>
@@ -131,6 +150,13 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
             <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Total Interest Paid</div>
             <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
               {formatINR(results.snowballInterest)}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-end border-b border-emerald-100 dark:border-emerald-900/50 pb-4">
+            <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Total Amount Payable</div>
+            <div className="text-xl font-black text-slate-900 dark:text-white">
+              {formatINR(results.totalDebt + results.snowballInterest)}
             </div>
           </div>
 

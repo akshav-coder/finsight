@@ -128,11 +128,6 @@ export default function TransactionTable({ transactions }) {
     return filteredAndSortedTransactions.slice(start, start + pageSize);
   }, [filteredAndSortedTransactions, currentPage, pageSize]);
 
-  const SortIcon = ({ columnKey }) => {
-    if (sortConfig.key !== columnKey) return <ArrowDown className="w-3 h-3 ml-1 opacity-20" />;
-    return sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 ml-1 text-primary-500" /> : <ArrowDown className="w-3 h-3 ml-1 text-primary-500" />;
-  };
-
   return (
     <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col h-full transition-colors duration-200">
       
@@ -166,7 +161,7 @@ export default function TransactionTable({ transactions }) {
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export CSV</span>
             </button>
-
+ 
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
@@ -177,7 +172,7 @@ export default function TransactionTable({ transactions }) {
               <option value="credit">Money In</option>
               <option value="debit">Money Out</option>
             </select>
-
+ 
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -193,7 +188,7 @@ export default function TransactionTable({ transactions }) {
           </div>
         </div>
       </div>
-
+ 
       <div className="overflow-x-auto custom-scrollbar flex-1">
         <table className="w-full text-left border-collapse min-w-[700px]">
           <thead className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-10 transition-colors duration-200">
@@ -203,7 +198,7 @@ export default function TransactionTable({ transactions }) {
                 onClick={() => handleSort('date')}
               >
                 <div className="flex items-center">
-                  Date <SortIcon columnKey="date" />
+                  Date <SortIcon columnKey="date" sortConfig={sortConfig} />
                 </div>
               </th>
               <th 
@@ -211,7 +206,7 @@ export default function TransactionTable({ transactions }) {
                 onClick={() => handleSort('description')}
               >
                 <div className="flex items-center">
-                  Description <SortIcon columnKey="description" />
+                  Description <SortIcon columnKey="description" sortConfig={sortConfig} />
                 </div>
               </th>
               <th 
@@ -219,7 +214,7 @@ export default function TransactionTable({ transactions }) {
                 onClick={() => handleSort('category')}
               >
                 <div className="flex items-center">
-                  Category <SortIcon columnKey="category" />
+                  Category <SortIcon columnKey="category" sortConfig={sortConfig} />
                 </div>
               </th>
               <th 
@@ -227,7 +222,7 @@ export default function TransactionTable({ transactions }) {
                 onClick={() => handleSort('amount')}
               >
                 <div className="flex items-center justify-end">
-                  Amount <SortIcon columnKey="amount" />
+                  Amount <SortIcon columnKey="amount" sortConfig={sortConfig} />
                 </div>
               </th>
             </tr>
@@ -284,7 +279,7 @@ export default function TransactionTable({ transactions }) {
           </tbody>
         </table>
       </div>
-
+ 
       {/* Pagination Controls */}
       {totalRecords > 0 && (
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-slate-900/50 transition-colors duration-200">
@@ -304,11 +299,11 @@ export default function TransactionTable({ transactions }) {
             </select>
             <span>rows</span>
           </div>
-
+ 
           <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
             Page {currentPage} of {totalPages}
           </div>
-
+ 
           <div className="flex gap-2">
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -329,4 +324,10 @@ export default function TransactionTable({ transactions }) {
       )}
     </div>
   );
+}
+
+// Fixed nested component design for React efficiency
+function SortIcon({ columnKey, sortConfig }) {
+  if (sortConfig.key !== columnKey) return <ArrowDown className="w-3 h-3 ml-1 opacity-20" />;
+  return sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 ml-1 text-primary-500" /> : <ArrowDown className="w-3 h-3 ml-1 text-primary-500" />;
 }

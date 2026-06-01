@@ -7,10 +7,10 @@ export default function AmortizationBarChart({ schedule }) {
   for (let i = 0; i < schedule.length; i += 12) {
     const yearSlice = schedule.slice(i, i + 12);
     const yearNumber = Math.floor(i / 12) + 1;
-    
+
     const principalPaid = yearSlice.reduce((sum, m) => sum + m.principalPaid, 0);
     const interestPaid = yearSlice.reduce((sum, m) => sum + m.interest, 0);
-    
+
     yearlyData.push({
       year: `Year ${yearNumber}`,
       Principal: principalPaid,
@@ -42,21 +42,21 @@ export default function AmortizationBarChart({ schedule }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={yearlyData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
-            <XAxis 
-              dataKey="year" 
-              axisLine={false} 
-              tickLine={false} 
+            <XAxis
+              dataKey="year"
+              axisLine={false}
+              tickLine={false}
               tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
               dy={10}
             />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
+            <YAxis
+              axisLine={false}
+              tickLine={false}
               tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
               tickFormatter={(val) => `₹${(val / 100000).toFixed(0)}L`}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9', opacity: 0.4 }} />
-            <Legend verticalAlign="top" align="right" height={36}/>
+            <Legend verticalAlign="top" align="right" height={36} />
             <Bar dataKey="Principal" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
             <Bar dataKey="Interest" stackId="a" fill="#f43f5e" radius={[4, 4, 0, 0]} />
           </BarChart>

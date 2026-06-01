@@ -18,9 +18,6 @@ export function calculateStepUpSIP(monthly, annualRate, years, stepUpPercent) {
   
   for (let year = 0; year < years; year++) {
     // Calculate value of this year's SIP at end of tenure
-    const monthsThisYear = 12;
-    const monthsRemaining = (years - year) * 12;
-    
     // Calculate FV of just this year's 12 installments over the remaining tenure
     // FV = P * [ (1+r)^12 - 1 ] / r * (1+r) * (1+r)^(remaining months after this year)
     let yearValue = 0;
