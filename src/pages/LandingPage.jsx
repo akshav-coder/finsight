@@ -399,16 +399,12 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center mb-24">
               <div>
-                <h3 className="text-6xl font-black text-slate-900 dark:text-white mb-2">
-                  <AnimatedCounter from={0} to={2.4} suffix=" Cr+" prefix="₹" />
-                </h3>
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Average tax saved identified</p>
+                <h3 className="text-6xl font-black text-slate-900 dark:text-white mb-2">₹0</h3>
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Cost to use every calculator</p>
               </div>
               <div>
-                <h3 className="text-6xl font-black text-slate-900 dark:text-white mb-2">
-                  <AnimatedCounter from={0} to={50000} suffix="+" />
-                </h3>
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Statements analyzed</p>
+                <h3 className="text-6xl font-black text-slate-900 dark:text-white mb-2">0</h3>
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Statements ever stored on our servers</p>
               </div>
               <div>
                 <h3 className="text-6xl font-black text-slate-900 dark:text-white mb-2">
@@ -418,7 +414,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -426,13 +422,13 @@ export default function LandingPage() {
             >
               <Quote className="absolute top-8 left-8 w-12 h-12 text-primary-500/10" />
               <p className="text-2xl text-slate-700 dark:text-slate-300 italic mb-8 relative z-10 leading-relaxed">
-                "I had no idea I was paying ₹45,000 extra in taxes every year. FinSight showed me exactly what to invest in to save it. The best part? I didn't even have to sign up."
+                "Most Indians can't tell you where last month's salary actually went. We built FinSight because understanding your own money shouldn't require a CA, an advisor, or handing your bank details to another app."
               </p>
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center text-white font-black text-xl">RS</div>
+                <div className="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center text-white font-black text-xl">FS</div>
                 <div>
-                  <h5 className="text-lg font-bold text-slate-900 dark:text-white">Rahul S.</h5>
-                  <p className="text-slate-500 dark:text-slate-400">Software Engineer, Bangalore</p>
+                  <h5 className="text-lg font-bold text-slate-900 dark:text-white">The FinSight Team</h5>
+                  <p className="text-slate-500 dark:text-slate-400">Why we built this</p>
                 </div>
               </div>
             </motion.div>
@@ -544,7 +540,7 @@ export default function LandingPage() {
               </button>
               
               <p className="mt-10 text-lg font-bold text-white/60">
-                Join 50,000+ Indians who finally understand their finances.
+                Free, private, and built for how Indians actually manage money.
               </p>
             </motion.div>
           </div>
