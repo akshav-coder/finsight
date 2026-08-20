@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Secrets - never commit
+.env
+.env.*
+!.env.example
+
+# Personal/sensitive test data - never commit
+HDFC_Statement_*.pdf
+HDFC_Statement_*.xlsx
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
