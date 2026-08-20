@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
 
 export default function PricingPage() {
   const { user, isPro, setIsPro } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -20,53 +19,89 @@ export default function PricingPage() {
     };
   }, []);
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (!user) {
       navigate('/login');
       return;
     }
-    
+
     if (isPro) {
       alert("You are already on the Pro plan!");
       return;
     }
 
     setLoading(true);
-    
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_SsnT8eTJ1VK64M',
-      amount: 19900,
-      currency: "INR",
-      name: "FinSight Pro",
-      description: "Upgrade to unlimited analytics",
-      handler: async function (response) {
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          await updateDoc(userRef, { isPro: true });
-          setIsPro(true);
-          navigate('/app');
-        } catch (error) {
-          console.error("Failed to upgrade:", error);
-          alert("Failed to update profile. Please contact support.");
-        } finally {
-          setLoading(false);
-        }
-      },
-      prefill: {
-        name: user?.displayName || "",
-        email: user?.email || "",
-      },
-      theme: {
-        color: "#6366f1"
-      }
-    };
-    
-    const rzp = new window.Razorpay(options);
-    rzp.on('payment.failed', function (response){
-      console.error(response.error);
+    setError('');
+
+    try {
+      // 1. Ask the server to create the order — amount is fixed server-side,
+      //    never trusted from the client.
+      const idToken = await user.getIdToken();
+      const orderRes = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      });
+      const order = await orderRes.json();
+      if (!orderRes.ok) throw new Error(order.error || 'Could not start checkout.');
+
+      const options = {
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.orderId,
+        name: "FinSight Pro",
+        description: "Upgrade to unlimited analytics",
+        handler: async function (response) {
+          try {
+            // 2. Server verifies the payment signature before granting Pro —
+            //    this is the step that was missing before; the client can no
+            //    longer just declare itself Pro.
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || 'Payment could not be verified.');
+            }
+            setIsPro(true);
+            navigate('/app');
+          } catch (err) {
+            console.error("Payment verification failed:", err);
+            setError(err.message || 'Payment could not be verified. Please contact support.');
+          } finally {
+            setLoading(false);
+          }
+        },
+        prefill: {
+          name: user?.displayName || "",
+          email: user?.email || "",
+        },
+        theme: {
+          color: "#6366f1"
+        },
+        modal: {
+          ondismiss: () => setLoading(false),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        console.error(response.error);
+        setError('Payment failed. Please try again.');
+        setLoading(false);
+      });
+      rzp.open();
+    } catch (err) {
+      console.error("Failed to start checkout:", err);
+      setError(err.message || 'Could not start checkout. Please try again.');
       setLoading(false);
-    });
-    rzp.open();
+    }
   };
 
   return (
@@ -134,13 +169,18 @@ export default function PricingPage() {
           </ul>
 
           {import.meta.env.VITE_ENABLE_PAYMENTS === 'true' ? (
-            <button 
-              onClick={handleUpgrade}
-              disabled={loading || isPro}
-              className="w-full py-4 rounded-2xl font-black bg-primary-600 hover:bg-primary-700 text-white transition-all uppercase tracking-widest text-sm shadow-lg shadow-primary-500/30 hover:-translate-y-0.5 flex items-center justify-center gap-2"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : isPro ? 'Already Pro' : 'Get Pro'}
-            </button>
+            <>
+              {error && (
+                <p className="mb-3 text-sm font-medium text-danger-600 dark:text-danger-400">{error}</p>
+              )}
+              <button
+                onClick={handleUpgrade}
+                disabled={loading || isPro}
+                className="w-full py-4 rounded-2xl font-black bg-primary-600 hover:bg-primary-700 text-white transition-all uppercase tracking-widest text-sm shadow-lg shadow-primary-500/30 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : isPro ? 'Already Pro' : 'Get Pro'}
+              </button>
+            </>
           ) : (
             <button 
               disabled

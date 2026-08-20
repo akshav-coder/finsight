@@ -1,10 +1,22 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { scrubPII } from './privacyScrubber';
-
-console.log("TESTING ENV VAR:", import.meta.env.VITE_GEMINI_API_KEY);
+import { auth } from '../config/firebase';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const isAIEnabled = import.meta.env.VITE_ENABLE_AI === 'true';
+
+// The /api/gemini proxy requires a signed-in Firebase user so anonymous
+// scripts can't call it directly and run up the API bill.
+async function getAuthHeaders() {
+  if (!auth.currentUser) {
+    throw new Error('Please sign in with Google to use AI features.');
+  }
+  const idToken = await auth.currentUser.getIdToken();
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${idToken}`,
+  };
+}
 
 /**
  * Extracts transactions from a bank statement.
@@ -26,9 +38,7 @@ export async function parseStatementWithGemini(text) {
     try {
       const response = await fetch('/api/gemini', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ text: scrubbedText }),
       });
 
@@ -97,9 +107,7 @@ export async function getGeminiResponse(prompt) {
     try {
       const response = await fetch('/api/gemini', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ prompt }),
       });
 
