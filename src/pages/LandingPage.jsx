@@ -277,11 +277,11 @@ export default function LandingPage() {
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <ToolCard icon={PieChart} title="Statement Analyzer" description="Upload bank statement → get full spending breakdown" tag="Most Popular" path="/app/statement-analytics" delay={0.1} />
+              <ToolCard icon={PieChart} title="Statement Analyzer" description="Upload bank statement → get full spending breakdown" tag={import.meta.env.VITE_ENABLE_AI === 'true' ? "Most Popular" : "AI Parsing: Coming Soon"} path="/app/statement-analytics" delay={0.1} />
               <ToolCard icon={Calculator} title="Loan Simplifier" description="See exactly how much your EMI costs you" tag="Save Money" path="/app/loan" delay={0.2} />
               <ToolCard icon={CreditCard} title="Credit Card Analyzer" description="Escape the minimum payment trap" tag="Eye Opener" path="/app/credit-card" delay={0.3} />
               <ToolCard icon={PiggyBank} title="FD / RD Tracker" description="Find the best FD rates across banks" tag="Earn More" path="/app/fd-rd" delay={0.4} />
-              <ToolCard icon={Lightbulb} title="Savings Advisor" description="Get personalized tips based on your spending" tag="AI Powered" path="/app/savings-advisor" delay={0.5} />
+              <ToolCard icon={Lightbulb} title="Savings Advisor" description="Get personalized tips based on your spending" tag={import.meta.env.VITE_ENABLE_AI === 'true' ? "AI Powered" : "Coming Soon"} path="/app/savings-advisor" delay={0.5} />
               <ToolCard icon={Target} title="Debt Planner" description="Avalanche vs Snowball — which clears debt faster" tag="Get Free" path="/app/debt-planner" delay={0.6} />
               <ToolCard icon={Receipt} title="Tax Saver" description="Find how much tax you can legally save" tag="Save Tax" path="/app/tax-saver" delay={0.7} />
               <ToolCard icon={TrendingUp} title="SIP Calculator" description="See how ₹5,000/month becomes ₹50L" tag="Grow Wealth" path="/app/sip-calculator" delay={0.8} />
@@ -344,22 +344,22 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6">
             <motion.div initial="initial" whileInView="whileInView" variants={fadeUp} className="text-center mb-20">
               <h2 className="text-4xl md:text-6xl font-display font-black text-slate-900 dark:text-white mb-6">
-                Your Data Never Leaves Your Device
+                Your Data Is Never Stored
               </h2>
               <p className="text-xl text-slate-500 dark:text-slate-400">Security that isn't just a marketing slogan.</p>
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
-                { 
-                  title: "No Account Required", 
-                  desc: "Use every feature without creating an account or giving your email.", 
-                  icon: UserX 
+                {
+                  title: "No Account Required",
+                  desc: "Use every calculator without creating an account or giving your email.",
+                  icon: UserX
                 },
-                { 
-                  title: "Nothing Stored", 
-                  desc: "Your data is processed in your browser only. We store nothing on any server.", 
-                  icon: ServerOff 
+                {
+                  title: "Nothing Stored",
+                  desc: "Calculations run in your browser. Statement data sent for AI parsing is discarded immediately after — never saved to a database.",
+                  icon: ServerOff
                 },
                 { 
                   title: "No Tracking", 
@@ -450,7 +450,7 @@ export default function LandingPage() {
                 Upload Your Bank Statement.<br />Get Your Financial Report Card.
               </h2>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-10 leading-relaxed italic">
-                Just drag and drop your PDF statement (HDFC, SBI, ICICI, Axis — any bank). Our local AI does the rest.
+                Just drag and drop your PDF statement (HDFC, SBI, ICICI, Axis — any bank). Our AI does the rest, then forgets it ever saw your data.
               </p>
               <button 
                 onClick={() => navigate('/app')}
@@ -499,13 +499,13 @@ export default function LandingPage() {
             </motion.div>
 
             <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-              <FAQItem 
-                question="Is FinSight really free?" 
-                answer="Yes. The free tier gives you 2 uploads per month and access to all basic calculators. For unlimited uploads and advanced AI insights, our Pro plan is available for just ₹199/month." 
+              <FAQItem
+                question="Is FinSight really free?"
+                answer="Yes. All calculators are free with no account needed. A Pro plan with unlimited statement uploads and advanced AI insights (₹199/month) is launching soon."
               />
-              <FAQItem 
-                question="Is my bank statement data safe?" 
-                answer="Your data is processed entirely in your browser using local AI. Nothing is uploaded to our servers or stored anywhere. You can verify this by checking your network tab – zero data leaves your device." 
+              <FAQItem
+                question="Is my bank statement data safe?"
+                answer="Your data is never stored on our servers or in any database — calculators run entirely in your browser. For AI statement parsing, we first strip personal identifiers (PAN, phone, email, account numbers) from the text, then send only what's needed to our AI provider to extract transactions. It's processed and immediately discarded — nothing is saved."
               />
               <FAQItem 
                 question="Which banks are supported?" 
