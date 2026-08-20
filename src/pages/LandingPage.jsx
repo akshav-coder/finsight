@@ -486,7 +486,7 @@ export default function LandingPage() {
         </section>
 
         {/* Section 8: FAQ */}
-        <section className="py-32 bg-slate-50 dark:bg-transparent">
+        <section id="faq" className="py-32 bg-slate-50 dark:bg-transparent">
           <div className="max-w-4xl mx-auto px-6">
             <motion.div initial="initial" whileInView="whileInView" variants={fadeUp} className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-display font-black text-slate-900 dark:text-white mb-6">
@@ -590,10 +590,11 @@ export default function LandingPage() {
             <div className="space-y-4">
               <h5 className="font-black text-slate-900 dark:text-white uppercase tracking-widest mb-8">Other</h5>
               <ul className="space-y-4 text-slate-500 dark:text-slate-400 font-bold">
-                <li><a href="#privacy" className="hover:text-primary-500 transition-colors">Privacy Policy</a></li>
+                <li><Link to="/privacy" className="hover:text-primary-500 transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-primary-500 transition-colors">Terms of Service</Link></li>
                 <li><a href="#how-it-works" className="hover:text-primary-500 transition-colors">How It Works</a></li>
-                <li><a href="#" className="hover:text-primary-500 transition-colors">FAQ</a></li>
-                <li><a href="#" className="hover:text-primary-500 transition-colors">Contact</a></li>
+                <li><a href="#faq" className="hover:text-primary-500 transition-colors">FAQ</a></li>
+                <li><a href="mailto:REPLACE_WITH_SUPPORT_EMAIL" className="hover:text-primary-500 transition-colors">Contact</a></li>
               </ul>
             </div>
           </div>

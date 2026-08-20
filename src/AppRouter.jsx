@@ -3,6 +3,8 @@ import { DataProvider, useData } from './context/DataContext';
 import { useAuth } from './context/AuthContext';
 
 import LandingPage from './pages/LandingPage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import AppLayout from './layouts/AppLayout';
 
 import Dashboard from './pages/Dashboard';
@@ -42,6 +44,8 @@ export default function AppRouter() {
         {/* Public Route */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
 
         {/* App Routes Wrapper (Publicly accessible dashboard and utility calculators) */}
         <Route path="/app" element={<AppLayout />}>
