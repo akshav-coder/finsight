@@ -286,7 +286,7 @@ export default function Dashboard() {
             <div>
               <h4 className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-3 tracking-tight">Unlock Private Financial Insights</h4>
               <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl leading-relaxed font-medium">
-                Our <strong className="text-slate-800 dark:text-slate-200">Local-First Analyzer</strong> processes your bank statement 100% inside your browser. No data ever leaves your computer.
+                Calculations run <strong className="text-slate-800 dark:text-slate-200">entirely in your browser</strong>. Statement data is only sent for AI-powered parsing, with personal identifiers stripped first — and it's never stored.
               </p>
             </div>
             <button 
