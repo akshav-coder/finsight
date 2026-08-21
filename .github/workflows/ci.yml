@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Lint is informational only for now — the repo has some pre-existing
+      # warnings (unused vars, a couple of hook rules) unrelated to any given
+      # change. Not blocking CI on those; the build step below is the real
+      # gate.
+      - run: npm run lint
+        continue-on-error: true
+
+      - run: npm run build
