@@ -6,6 +6,7 @@ import AmortizationBarChart from '../components/LoanSimplifier/AmortizationBarCh
 import PrepaymentComparison from '../components/LoanSimplifier/PrepaymentComparison';
 import AmortizationTable from '../components/LoanSimplifier/AmortizationTable';
 import LoanAISummary from '../components/LoanSimplifier/LoanAISummary';
+import HomeLoanTaxBenefit from '../components/LoanSimplifier/HomeLoanTaxBenefit';
 import { calculateSavings, generateSchedule } from '../utils/loanCalculations';
 
 export default function LoanSimplifier() {
@@ -16,28 +17,44 @@ export default function LoanSimplifier() {
     startMonth: new Date().getMonth(),
     startYear: new Date().getFullYear(),
     prepayment: 0,
-    paidEmis: 0
+    paidEmis: 0,
+    lumpSum: 0,
+    lumpSumMonth: 1,
+    prepaymentMode: 'reduceTenure'
   });
 
   // Calculate results based on current inputs
   const results = useMemo(() => {
     const savings = calculateSavings(
-      loanData.amount, 
-      loanData.rate, 
-      loanData.tenure, 
-      loanData.prepayment
-    );
-    
-    const schedule = generateSchedule(
-      loanData.amount, 
-      loanData.rate, 
-      loanData.tenure, 
+      loanData.amount,
+      loanData.rate,
+      loanData.tenure,
       loanData.prepayment,
-      loanData.paidEmis
+      loanData.paidEmis,
+      loanData.lumpSum,
+      loanData.lumpSumMonth,
+      loanData.prepaymentMode
+    );
+
+    const schedule = generateSchedule(
+      loanData.amount,
+      loanData.rate,
+      loanData.tenure,
+      loanData.prepayment,
+      loanData.paidEmis,
+      loanData.lumpSum,
+      loanData.lumpSumMonth,
+      loanData.prepaymentMode
     );
 
     return { ...savings, schedule };
   }, [loanData]);
+
+  // The principal actually still owed today — the original loan amount once
+  // any already-paid EMIs are accounted for. Feeding raw loanData.amount into
+  // "Total Payable"/the pie chart when paidEmis > 0 would double-count the
+  // principal already paid off.
+  const outstandingPrincipal = results.schedule[0]?.openingBalance ?? loanData.amount;
 
   return (
     <div className="animate-fade-in-up max-w-7xl mx-auto w-full pb-20">
@@ -54,30 +71,34 @@ export default function LoanSimplifier() {
         {/* Left Side: Input Form */}
         <div className="lg:col-span-4 space-y-6">
           <LoanInputForm loanData={loanData} setLoanData={setLoanData} />
+          {loanData.loanType === 'Home Loan' && (
+            <HomeLoanTaxBenefit loanData={loanData} results={results} />
+          )}
           <LoanAISummary loanData={loanData} results={results} />
         </div>
 
         {/* Right Side: Results & Charts */}
         <div className="lg:col-span-8 space-y-8">
-          <LoanSummaryCards results={results} amount={loanData.amount} />
-          
+          <LoanSummaryCards results={results} amount={outstandingPrincipal} />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <PrincipalInterestChart 
-              principal={loanData.amount} 
-              totalInterest={results.totalInterestWithPrepayment} 
+            <PrincipalInterestChart
+              principal={outstandingPrincipal}
+              totalInterest={results.totalInterestWithPrepayment}
             />
-            <PrepaymentComparison 
+            <PrepaymentComparison
               loanData={loanData}
               results={results}
             />
           </div>
 
           <AmortizationBarChart schedule={results.schedule} />
-          
-          <AmortizationTable 
-            schedule={results.schedule} 
+
+          <AmortizationTable
+            schedule={results.schedule}
             startMonth={loanData.startMonth}
             startYear={loanData.startYear}
+            paidEmis={loanData.paidEmis}
           />
         </div>
       </div>

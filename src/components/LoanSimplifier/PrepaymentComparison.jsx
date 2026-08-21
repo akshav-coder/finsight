@@ -1,9 +1,10 @@
-import { TrendingDown, Calendar, CreditCard, ChevronRight } from 'lucide-react';
+import { TrendingDown } from 'lucide-react';
 import { formatCurrency, calculateSavings } from '../../utils/loanCalculations';
 
 export default function PrepaymentComparison({ loanData, results }) {
-  const { amount, rate, tenure, prepayment } = loanData;
+  const { amount, rate, tenure, prepayment, paidEmis = 0, lumpSum = 0, prepaymentMode } = loanData;
   const { monthsSaved, interestSaved } = results;
+  const hasAnyPrepayment = prepayment > 0 || lumpSum > 0;
 
   const standardMonths = Math.round(tenure * 12);
   const prepayMonths = standardMonths - monthsSaved;
@@ -20,7 +21,7 @@ export default function PrepaymentComparison({ loanData, results }) {
     return `${endMonthName} ${endYear}`;
   };
 
-  if (prepayment <= 0) {
+  if (!hasAnyPrepayment) {
     return (
       <div className="glass-panel p-8 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-center opacity-50 h-[400px]">
         <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
@@ -28,18 +29,27 @@ export default function PrepaymentComparison({ loanData, results }) {
         </div>
         <h4 className="text-lg font-bold text-slate-400">Prepayment Power</h4>
         <p className="text-sm text-slate-400 mt-2 max-w-[200px]">
-          Enter an extra monthly payment to see how much you save!
+          Enter an extra monthly payment or a one-time lump sum to see how much you save!
         </p>
       </div>
     );
   }
 
-  // Recalculate 'Without' to show comparison
-  const baseSavings = calculateSavings(amount, rate, tenure, 0);
+  // Recalculate 'Without' to show comparison — must use the same paidEmis as
+  // everything else on the page, or this compares two loans that started
+  // from different points in time.
+  const baseSavings = calculateSavings(amount, rate, tenure, 0, paidEmis);
   const totalInterestNoPrepay = baseSavings.totalInterestNoPrepayment;
 
-  const totalCostNoPrepay = amount + totalInterestNoPrepay;
-  const totalCostWithPrepay = amount + results.totalInterestWithPrepayment;
+  const isReduceEMIMode = lumpSum > 0 && prepaymentMode === 'reduceEMI';
+  const newEmi = results.schedule[results.schedule.length - 1]?.emi;
+  const originalEmi = results.schedule[0]?.emi;
+
+  const badgeText = prepayment > 0 && lumpSum > 0
+    ? `₹${prepayment}/mo + ₹${lumpSum} lump sum`
+    : lumpSum > 0
+      ? `₹${lumpSum} one-time`
+      : `₹${prepayment}/mo extra`;
 
   return (
     <div className="glass-panel overflow-hidden rounded-3xl shadow-lg border border-emerald-100 dark:border-emerald-900/30 flex flex-col h-[400px]">
@@ -49,7 +59,7 @@ export default function PrepaymentComparison({ loanData, results }) {
           Prepayment Impact
         </h3>
         <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-          ₹{prepayment}/mo extra
+          {badgeText}
         </span>
       </div>
 
@@ -77,7 +87,7 @@ export default function PrepaymentComparison({ loanData, results }) {
           <div className="space-y-4 pl-4">
             <p className="text-[10px] font-bold text-emerald-500 uppercase">With Prepayment</p>
             <div>
-              <p className="text-xs text-slate-500">New Tenure & Payoff</p>
+              <p className="text-xs text-slate-500">{isReduceEMIMode ? 'Tenure & Payoff (unchanged)' : 'New Tenure & Payoff'}</p>
               <div className="flex items-center text-emerald-600 font-bold whitespace-nowrap">
                 <span className="text-sm">{newTenureStr} <span className="text-xs font-semibold text-emerald-500/70 ml-1">({getEndDate(prepayMonths)})</span></span>
               </div>
@@ -99,7 +109,9 @@ export default function PrepaymentComparison({ loanData, results }) {
                 {formatCurrency(interestSaved)}
               </h4>
               <p className="text-xs font-bold text-emerald-600/70 mt-1 flex items-center">
-                + {Math.floor(monthsSaved / 12)} years {monthsSaved % 12} months saved from your life
+                {isReduceEMIMode
+                  ? `EMI drops from ${formatCurrency(originalEmi)} to ${formatCurrency(newEmi)}/mo`
+                  : `+ ${Math.floor(monthsSaved / 12)} years ${monthsSaved % 12} months saved from your life`}
               </p>
             </div>
             <div className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center animate-bounce-slow">

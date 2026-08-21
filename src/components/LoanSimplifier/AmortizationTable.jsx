@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { formatCurrency } from '../../utils/loanCalculations';
 
-export default function AmortizationTable({ schedule, startMonth, startYear }) {
+export default function AmortizationTable({ schedule, startMonth, startYear, paidEmis = 0 }) {
   const [expanded, setExpanded] = useState(false);
   
   const displayRows = expanded ? schedule : schedule.slice(0, 12);
@@ -42,8 +42,12 @@ export default function AmortizationTable({ schedule, startMonth, startYear }) {
           </thead>
           <tbody className="text-sm font-medium">
             {displayRows.map((row, i) => {
-              const currentMonthIndex = (startMonth + i) % 12;
-              const currentYear = startYear + Math.floor((startMonth + i) / 12);
+              // Row 0 of `schedule` is the first month AFTER any already-paid
+              // EMIs, not the loan's true calendar start — offset by paidEmis
+              // or these dates are stale by exactly that many months.
+              const monthsFromTrueStart = paidEmis + i;
+              const currentMonthIndex = (startMonth + monthsFromTrueStart) % 12;
+              const currentYear = startYear + Math.floor((startMonth + monthsFromTrueStart) / 12);
               
               return (
                 <tr key={i} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">

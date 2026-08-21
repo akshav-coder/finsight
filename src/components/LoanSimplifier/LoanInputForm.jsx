@@ -193,6 +193,75 @@ export default function LoanInputForm({ loanData, setLoanData }) {
             Even a small monthly prepay can save lakhs in interest!
           </p>
         </div>
+
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+          <label className="block text-sm font-bold text-success-600 dark:text-success-400 mb-2">
+            One-Time Lump Sum Prepayment (₹)
+          </label>
+          <input
+            type="number"
+            name="lumpSum"
+            value={loanData.lumpSum || ''}
+            onChange={handleChange}
+            placeholder="e.g. 300000 (a bonus, maturity payout, etc.)"
+            className="w-full px-4 py-3 bg-success-50/30 dark:bg-success-900/10 border border-success-200/50 dark:border-success-800/30 rounded-xl text-success-700 dark:text-success-300 focus:outline-none focus:ring-2 focus:ring-success-500/20 focus:border-success-500 transition-all font-mono text-lg font-bold"
+          />
+
+          {loanData.lumpSum > 0 && (
+            <div className="mt-3 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Which month do you make this payment?
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  name="lumpSumMonth"
+                  value={loanData.lumpSumMonth || 1}
+                  onChange={handleChange}
+                  placeholder="e.g. 12"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
+                  After this payment, would you rather...
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLoanData(prev => ({ ...prev, prepaymentMode: 'reduceTenure' }))}
+                    className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left ${
+                      loanData.prepaymentMode !== 'reduceEMI'
+                        ? 'bg-primary-600 text-white shadow-md'
+                        : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    Finish sooner
+                    <span className="block font-normal opacity-80 mt-0.5">same EMI, shorter loan</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLoanData(prev => ({ ...prev, prepaymentMode: 'reduceEMI' }))}
+                    className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left ${
+                      loanData.prepaymentMode === 'reduceEMI'
+                        ? 'bg-primary-600 text-white shadow-md'
+                        : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    Pay less monthly
+                    <span className="block font-normal opacity-80 mt-0.5">same end date, lower EMI</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <p className="text-[10px] text-slate-500 mt-2">
+            A one-time payment — a bonus, an FD maturing, anything extra you can put in once.
+          </p>
+        </div>
       </div>
     </div>
   );
