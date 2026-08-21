@@ -19,8 +19,8 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-primary-100 dark:selection:bg-primary-900/50 selection:text-primary-900 dark:selection:text-primary-100 overflow-hidden transition-colors duration-200">
       <Sidebar />
-      <div className="flex-1 md:ml-64 flex flex-col h-full bg-slate-50/50 dark:bg-slate-950/50 relative">
-        <main className="flex-1 overflow-x-hidden overflow-y-auto w-full custom-scrollbar p-6 lg:p-10 relative z-10">
+      <div className="flex-1 min-w-0 md:ml-64 flex flex-col h-full bg-slate-50/50 dark:bg-slate-950/50 relative">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto w-full custom-scrollbar pt-20 p-6 md:pt-6 lg:p-10 relative z-10">
           <Outlet />
         </main>
       </div>
