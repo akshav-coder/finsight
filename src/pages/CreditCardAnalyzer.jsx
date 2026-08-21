@@ -5,7 +5,8 @@ import MinPaymentTrapChart from '../components/CreditCard/MinPaymentTrapChart';
 import InterestGrowthChart from '../components/CreditCard/InterestGrowthChart';
 import PayoffComparison from '../components/CreditCard/PayoffComparison';
 import CreditCardAISummary from '../components/CreditCard/CreditCardAISummary';
-import { calculateMinPaymentSchedule, calculateFixedPaymentSchedule } from '../utils/creditCardCalculations';
+import ConvertToEMI from '../components/CreditCard/ConvertToEMI';
+import { calculateMinPaymentSchedule, calculateFixedPaymentSchedule, isInfiniteTrap } from '../utils/creditCardCalculations';
 
 export default function CreditCardAnalyzer() {
   const [cardData, setCardData] = useState({
@@ -31,9 +32,12 @@ export default function CreditCardAnalyzer() {
     };
   }, [cardData]);
 
-  // Calculate Debt Free Date
+  // Calculate Debt Free Date — null (badge hidden) if the planned payment
+  // is an infinite trap, since "debt free by [25 months from now]" would
+  // directly contradict the trap warning banner shown right below it.
   const debtFreeDate = useMemo(() => {
     if (!results.plannedSchedule || results.plannedSchedule.length === 0) return null;
+    if (isInfiniteTrap(results.plannedSchedule)) return null;
     const date = new Date();
     date.setMonth(date.getMonth() + results.plannedSchedule.length);
     return date.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
@@ -102,6 +106,7 @@ export default function CreditCardAnalyzer() {
         {/* Left Side: Inputs */}
         <div className="lg:col-span-4 space-y-6">
           <CardInputForm cardData={cardData} setCardData={setCardData} />
+          <ConvertToEMI cardData={cardData} results={results} />
           <CreditCardAISummary cardData={cardData} results={results} />
         </div>
 

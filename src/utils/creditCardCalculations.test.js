@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   calculateMinPaymentSchedule,
   calculateFixedPaymentSchedule,
+  isInfiniteTrap,
   totalInterest,
   isPaymentSufficient,
   calculateUtilization,
@@ -17,6 +18,25 @@ describe('calculateMinPaymentSchedule', () => {
   it('takes many months — this is the "minimum payment trap" the tool exists to illustrate', () => {
     const schedule = calculateMinPaymentSchedule(50000, 36, 5);
     expect(schedule.length).toBeGreaterThan(12);
+  });
+
+  it('flags an infinite trap when the minimum % never covers interest, instead of compounding forever', () => {
+    // Regression: at 2% minimum on a 42% APR card, the minimum payment
+    // (2% of balance) is always less than monthly interest (3.5% of
+    // balance) - true for every balance, forever, since both scale with
+    // the same `remaining`. This used to run the full 600-month cap and
+    // summed interest over a runaway-growing balance, producing a "total
+    // interest" figure in the hundreds of crores for an ordinary ₹1.5L
+    // balance. It should now stop early and flag the trap instead.
+    const schedule = calculateMinPaymentSchedule(150000, 42, 2);
+    expect(isInfiniteTrap(schedule)).toBe(true);
+    expect(schedule.length).toBeLessThan(30);
+    expect(totalInterest(schedule)).toBeLessThan(200000); // sane, not crores
+  });
+
+  it('a schedule that pays off successfully is never flagged as a trap', () => {
+    const schedule = calculateMinPaymentSchedule(50000, 36, 5);
+    expect(isInfiniteTrap(schedule)).toBe(false);
   });
 });
 
@@ -39,6 +59,22 @@ describe('calculateFixedPaymentSchedule', () => {
     const slow = calculateFixedPaymentSchedule(50000, 36, 3000);
     const fast = calculateFixedPaymentSchedule(50000, 36, 10000);
     expect(fast.length).toBeLessThan(slow.length);
+  });
+});
+
+describe('isInfiniteTrap', () => {
+  it('is true for a fixed-payment schedule that never covers interest', () => {
+    const schedule = calculateFixedPaymentSchedule(50000, 36, 1000);
+    expect(isInfiniteTrap(schedule)).toBe(true);
+  });
+
+  it('is false for a schedule that reaches a zero balance', () => {
+    const schedule = calculateFixedPaymentSchedule(50000, 36, 5000);
+    expect(isInfiniteTrap(schedule)).toBe(false);
+  });
+
+  it('is false for an empty schedule', () => {
+    expect(isInfiniteTrap([])).toBe(false);
   });
 });
 

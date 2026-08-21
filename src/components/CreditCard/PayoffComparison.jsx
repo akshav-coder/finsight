@@ -1,38 +1,43 @@
-import { Zap, TrendingDown, Clock, ShieldCheck, ChevronRight } from 'lucide-react';
-import { formatINR, totalInterest } from '../../utils/creditCardCalculations';
+import { Zap, Clock, ShieldCheck } from 'lucide-react';
+import { formatINR, totalInterest, isInfiniteTrap } from '../../utils/creditCardCalculations';
 
 export default function PayoffComparison({ results, cardData }) {
   const { minSchedule, plannedSchedule, aggressiveSchedule } = results;
+  const minIsTrap = isInfiniteTrap(minSchedule);
 
   const strategies = [
     {
       name: "Minimum Payment",
       payment: minSchedule[0]?.payment || 0,
       months: minSchedule.length,
+      isTrap: minIsTrap,
       interest: totalInterest(minSchedule),
       color: "bg-rose-500",
       textColor: "text-rose-600",
-      accentColor: "rose",
       isBest: false
     },
     {
       name: "Your Payment",
       payment: cardData.plannedPayment,
       months: plannedSchedule.length,
+      isTrap: isInfiniteTrap(plannedSchedule),
       interest: totalInterest(plannedSchedule),
       color: "bg-blue-500",
       textColor: "text-blue-600",
-      accentColor: "blue",
       isBest: false
     },
     {
       name: "Aggressive",
-      payment: cardData.plannedPayment + 2000,
+      // Was hardcoded to plannedPayment + 2000 regardless of what the user
+      // actually entered in the Aggressive Payment field — the schedule
+      // itself used the real value, so the label didn't match what was
+      // being shown right next to it.
+      payment: cardData.aggressivePayment || cardData.plannedPayment + 2000,
       months: aggressiveSchedule.length,
+      isTrap: isInfiniteTrap(aggressiveSchedule),
       interest: totalInterest(aggressiveSchedule),
       color: "bg-emerald-500",
       textColor: "text-emerald-600",
-      accentColor: "emerald",
       isBest: true
     }
   ];
@@ -50,12 +55,15 @@ export default function PayoffComparison({ results, cardData }) {
 
       <div className="flex-1 space-y-4">
         {strategies.map((strategy, i) => {
-          const savings = Math.max(0, minTotalInterest - strategy.interest);
-          const timeSavedMonths = Math.max(0, minSchedule.length - strategy.months);
+          // If the minimum itself is a trap, "savings" versus it isn't a
+          // meaningful rupee figure — any real payoff plan wins by an
+          // unbounded amount, so show that plainly instead of a number.
+          const savings = minIsTrap ? null : Math.max(0, minTotalInterest - strategy.interest);
+          const timeSavedMonths = minIsTrap ? null : Math.max(0, minSchedule.length - strategy.months);
 
           return (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className={`relative overflow-hidden p-4 rounded-2xl border ${
                 strategy.isBest ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/20' : 'border-slate-100 dark:border-slate-800 bg-slate-50/30'
               } transition-all hover:scale-[1.01] group`}
@@ -70,12 +78,12 @@ export default function PayoffComparison({ results, cardData }) {
                     <p className="text-sm font-black text-slate-700 dark:text-slate-200">{formatINR(strategy.payment)}/mo</p>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
-                  <p className="text-sm font-black text-slate-700 dark:text-slate-200">
-                    {strategy.months >= 600 ? "Infinite" : `${Math.floor(strategy.months / 12)}y ${strategy.months % 12}m`}
+                  <p className={`text-sm font-black ${strategy.isTrap ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                    {strategy.isTrap ? "Never" : `${Math.floor(strategy.months / 12)}y ${strategy.months % 12}m`}
                   </p>
-                  {strategy.name !== 'Minimum Payment' && (
+                  {strategy.name !== 'Minimum Payment' && !minIsTrap && (
                     <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                       - {Math.floor(timeSavedMonths / 12)}y {timeSavedMonths % 12}m saved
                     </p>
@@ -86,10 +94,12 @@ export default function PayoffComparison({ results, cardData }) {
               {strategy.name !== 'Minimum Payment' && (
                 <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/50 flex justify-between items-center transition-all group-hover:pl-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Interest Savings</span>
-                  <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatINR(savings)}</span>
+                  <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                    {savings === null ? "Any real payment wins" : formatINR(savings)}
+                  </span>
                 </div>
               )}
-              
+
               {strategy.isBest && (
                 <div className="absolute top-0 right-0 p-1">
                   <ShieldCheck className="w-4 h-4 text-emerald-500 fill-emerald-50 opacity-20" />

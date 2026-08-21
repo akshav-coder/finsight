@@ -1,17 +1,22 @@
-import { AlertCircle, Clock, TrendingDown, IndianRupee, Flame } from 'lucide-react';
-import { formatINR, totalInterest } from '../../utils/creditCardCalculations';
+import { AlertCircle, Clock, TrendingDown, Flame } from 'lucide-react';
+import { formatINR, totalInterest, isInfiniteTrap } from '../../utils/creditCardCalculations';
 
 export default function CardSummaryCards({ results, cardData }) {
   const { minSchedule, plannedSchedule } = results;
-  
+
   const monthlyInterest = (cardData.balance * (cardData.rate / 12 / 100)) || 0;
-  
+
   const minMonths = minSchedule.length;
   const plannedMonths = plannedSchedule.length;
-  
+  const minIsTrap = isInfiniteTrap(minSchedule);
+  const plannedIsTrap = isInfiniteTrap(plannedSchedule);
+
   const minTotalInterest = totalInterest(minSchedule);
   const plannedTotalInterest = totalInterest(plannedSchedule);
-  const savings = Math.max(0, minTotalInterest - plannedTotalInterest);
+  // If the minimum payment is an infinite trap, any real payoff plan saves
+  // an unbounded amount versus it — there's no single rupee figure that
+  // means anything here, so this deliberately isn't computed as a number.
+  const savings = minIsTrap || plannedIsTrap ? null : Math.max(0, minTotalInterest - plannedTotalInterest);
 
   const cards = [
     {
@@ -25,26 +30,26 @@ export default function CardSummaryCards({ results, cardData }) {
     },
     {
       title: "Payoff Time (Min)",
-      value: minMonths >= 600 ? "50+ Years" : `${Math.floor(minMonths / 12)}y ${minMonths % 12}mo`,
-      subValue: "If you pay only minimum",
+      value: minIsTrap ? "Never" : `${Math.floor(minMonths / 12)}y ${minMonths % 12}mo`,
+      subValue: minIsTrap ? "Minimum doesn't cover interest" : "If you pay only minimum",
       icon: Clock,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
-      darkBgColor: "dark:bg-orange-900/20"
+      color: minIsTrap ? "text-rose-600" : "text-orange-600",
+      bgColor: minIsTrap ? "bg-rose-50" : "bg-orange-50",
+      darkBgColor: minIsTrap ? "dark:bg-rose-900/20" : "dark:bg-orange-900/20"
     },
     {
       title: "Payoff Time (Planned)",
-      value: plannedMonths >= 600 && cardData.plannedPayment > 0 ? "Infinite Trap" : `${Math.floor(plannedMonths / 12)}y ${plannedMonths % 12}mo`,
-      subValue: `Paying ₹${cardData.plannedPayment}/mo`,
+      value: plannedIsTrap ? "Never" : `${Math.floor(plannedMonths / 12)}y ${plannedMonths % 12}mo`,
+      subValue: plannedIsTrap ? "This payment doesn't cover interest" : `Paying ₹${cardData.plannedPayment}/mo`,
       icon: TrendingDown,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
-      darkBgColor: "dark:bg-emerald-900/20"
+      color: plannedIsTrap ? "text-rose-600" : "text-emerald-600",
+      bgColor: plannedIsTrap ? "bg-rose-50" : "bg-emerald-50",
+      darkBgColor: plannedIsTrap ? "dark:bg-rose-900/20" : "dark:bg-emerald-900/20"
     },
     {
       title: "Potential Savings",
-      value: formatINR(savings),
-      subValue: "Saved vs. minimum payment",
+      value: savings === null ? "—" : formatINR(savings),
+      subValue: minIsTrap ? "Minimum never pays this off — any real plan wins" : "Saved vs. minimum payment",
       icon: AlertCircle,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
