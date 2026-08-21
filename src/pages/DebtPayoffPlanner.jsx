@@ -85,10 +85,11 @@ export default function DebtPayoffPlanner() {
 
         {/* Right Side: Dashboard */}
         <div className="lg:col-span-8 space-y-8">
-          <StrategyComparison 
-            results={results} 
-            selectedStrategy={selectedStrategy} 
-            setSelectedStrategy={setSelectedStrategy} 
+          <StrategyComparison
+            debts={debts}
+            results={results}
+            selectedStrategy={selectedStrategy}
+            setSelectedStrategy={setSelectedStrategy}
           />
           
           {results.totalDebt > 0 && (

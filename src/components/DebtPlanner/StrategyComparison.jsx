@@ -1,14 +1,21 @@
-import { CheckCircle2, AlertCircle, Zap, Snowflake } from 'lucide-react';
-import { formatINR, formatMonths } from '../../utils/debtCalculations';
+import { CheckCircle2, Zap, Snowflake } from 'lucide-react';
+import { formatINR, formatMonths, isDebtTrap, getPayoffOrder } from '../../utils/debtCalculations';
 
-export default function StrategyComparison({ results, selectedStrategy, setSelectedStrategy }) {
+export default function StrategyComparison({ debts, results, selectedStrategy, setSelectedStrategy }) {
   const avalanche = results.avalanche;
   const snowball = results.snowball;
-  
+
   const avalancheMonths = avalanche.length;
   const snowballMonths = snowball.length;
-  
-  const savings = results.snowballInterest - results.avalancheInterest;
+  const avalancheIsTrap = isDebtTrap(avalanche);
+  const snowballIsTrap = isDebtTrap(snowball);
+
+  // If either strategy is a trap, "savings between them" isn't a meaningful
+  // rupee figure — whichever one isn't trapped wins by an unbounded amount.
+  const savings = avalancheIsTrap || snowballIsTrap ? null : results.snowballInterest - results.avalancheInterest;
+
+  const avalancheOrder = getPayoffOrder(debts, avalanche);
+  const snowballOrder = getPayoffOrder(debts, snowball);
 
   const getDebtFreeDate = (months) => {
     const date = new Date();
@@ -64,10 +71,12 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
           <div className="flex justify-between items-end border-b border-primary-100 dark:border-primary-900/50 pb-4">
             <div className="flex flex-col">
               <span className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Debt Free In</span>
-              <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">By: {getDebtFreeDate(avalancheMonths)}</span>
+              <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
+                {avalancheIsTrap ? "Your budget can't outpace interest" : `By: ${getDebtFreeDate(avalancheMonths)}`}
+              </span>
             </div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white uppercase">
-              {formatMonths(avalancheMonths)}
+            <div className={`text-2xl font-black uppercase ${avalancheIsTrap ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
+              {avalancheIsTrap ? "Never" : formatMonths(avalancheMonths)}
             </div>
           </div>
 
@@ -88,15 +97,14 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
           <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl flex items-center justify-between">
              <div className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-tight">Savings vs Snowball</div>
              <div className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                +{formatINR(savings)}
+                {savings === null ? "—" : `+${formatINR(savings)}`}
              </div>
           </div>
 
           <div className="pt-2">
              <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Payoff Order</div>
              <div className="space-y-2">
-                {/* Find Payoff Order for Avalanche (Sorted by Rate) */}
-                {results.avalanche?.[0]?.debtStates?.map((d, i) => (
+                {avalancheOrder.map((d, i) => (
                    <div key={d.name} className="flex items-center space-x-2">
                       <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400">
                          {i + 1}
@@ -139,10 +147,12 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
           <div className="flex justify-between items-end border-b border-emerald-100 dark:border-emerald-900/50 pb-4">
             <div className="flex flex-col">
               <span className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Debt Free In</span>
-              <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">By: {getDebtFreeDate(snowballMonths)}</span>
+              <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
+                {snowballIsTrap ? "Your budget can't outpace interest" : `By: ${getDebtFreeDate(snowballMonths)}`}
+              </span>
             </div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white uppercase">
-              {formatMonths(snowballMonths)}
+            <div className={`text-2xl font-black uppercase ${snowballIsTrap ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
+              {snowballIsTrap ? "Never" : formatMonths(snowballMonths)}
             </div>
           </div>
 
@@ -163,16 +173,14 @@ export default function StrategyComparison({ results, selectedStrategy, setSelec
           <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl flex items-center justify-between">
              <div className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-tight">Difference</div>
              <div className="text-lg font-black text-amber-600 dark:text-amber-400">
-                {formatINR(Math.abs(savings))} more
+                {savings === null ? "—" : `${formatINR(Math.abs(savings))} more`}
              </div>
           </div>
 
           <div className="pt-2">
              <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Payoff Order</div>
              <div className="space-y-2">
-                {/* For actual order, we'd need to simulate or use the starting sort */}
-                {/* For snowball, it's just by balance ascending */}
-                {results.snowball?.[0]?.debtStates?.map((d, i) => (
+                {snowballOrder.map((d, i) => (
                    <div key={d.name} className="flex items-center space-x-2">
                       <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-400">
                          {i + 1}

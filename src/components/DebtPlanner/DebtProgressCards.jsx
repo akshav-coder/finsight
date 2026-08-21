@@ -1,7 +1,9 @@
-import { formatINR, formatMonths } from '../../utils/debtCalculations';
+import { formatINR, formatMonths, getPayoffOrder } from '../../utils/debtCalculations';
 
 export default function DebtProgressCards({ debts, schedule, strategyName }) {
-  // Get the month when each debt is first fully paid off (balance reaches 0)
+  // Sort debts by payoff month (earliest = highest priority in this strategy)
+  const sortedDebts = getPayoffOrder(debts, schedule);
+
   const getPayoffMonth = (debtName) => {
     if (!schedule || schedule.length === 0) return 0;
     const payoffRow = schedule.find(row =>
@@ -9,9 +11,6 @@ export default function DebtProgressCards({ debts, schedule, strategyName }) {
     );
     return payoffRow ? payoffRow.month : (schedule.length || 0);
   };
-
-  // Sort debts by payoff month (earliest = highest priority in this strategy)
-  const sortedDebts = [...debts].sort((a, b) => getPayoffMonth(a.name) - getPayoffMonth(b.name));
 
   const getColorClass = (rate) => {
     if (rate >= 36) return 'border-red-500 shadow-red-500/10';
