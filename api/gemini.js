@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { verifyFirebaseToken } from './_lib/verifyFirebaseToken.js';
+import { verifyFirebaseTokenAdmin, getAdminFirestore } from './_lib/firebaseAdmin.js';
+import { checkUploadQuota, incrementUploadCount } from './_lib/quota.js';
 
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const MAX_STATEMENT_TEXT_LENGTH = 60000; // ~ a very long multi-page statement
@@ -9,7 +10,10 @@ const MAX_PROMPT_LENGTH = 4000; // advisor prompts are short, generated client-s
  * Vercel Serverless Function: /api/gemini
  * Secure proxy to Google Gemini. Requires a valid Firebase Auth ID token
  * (Authorization: Bearer <idToken>) so anonymous scripts/bots can't run up
- * the API bill, and caps input/output size to bound cost per call.
+ * the API bill, caps input/output size, and enforces the free-tier monthly
+ * upload quota server-side (statement parsing only — the previous version
+ * only tracked this client-side, which any signed-in user could bypass by
+ * calling this endpoint directly).
  *
  * Supports:
  *  1. Statement Parsing: Pass a 'text' parameter (returns JSON array).
@@ -31,7 +35,7 @@ export default async function handler(req, res) {
 
   let user;
   try {
-    user = await verifyFirebaseToken(req);
+    user = await verifyFirebaseTokenAdmin(req);
   } catch (err) {
     return res.status(401).json({ error: `Unauthorized: ${err.message}` });
   }
@@ -45,6 +49,20 @@ export default async function handler(req, res) {
   }
   if (clientPrompt && clientPrompt.length > MAX_PROMPT_LENGTH) {
     return res.status(413).json({ error: 'Prompt too long.' });
+  }
+
+  // Only statement parsing counts against the free-tier monthly limit —
+  // advisor prompts (tax/SIP/loan insights) aren't upload-metered. Checked
+  // here (before the Gemini call) so an over-quota user doesn't cost an API
+  // call just to be rejected; actually committed only after a successful
+  // parse below, so a garbled/failed parse doesn't burn a free upload.
+  const db = getAdminFirestore();
+  if (text) {
+    try {
+      await checkUploadQuota(db, user.uid);
+    } catch (err) {
+      return res.status(err.statusCode || 403).json({ error: err.message });
+    }
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -92,13 +110,17 @@ ${text}`;
 
       const cleaned = cleanJSON(raw);
       const parsed = JSON.parse(cleaned);
+
+      // Only now, after a genuinely successful parse, commit the quota.
+      await incrementUploadCount(db, user.uid);
+
       return res.status(200).json(parsed);
     } else {
       // Text response for conversational advisors
       return res.status(200).json({ response: raw });
     }
   } catch (error) {
-    console.error(`Serverless Proxy Gemini Error (uid=${user.sub}):`, error);
+    console.error(`Serverless Proxy Gemini Error (uid=${user.uid}):`, error);
     return res.status(500).json({ error: error.message || 'Failed to query AI models' });
   }
 }

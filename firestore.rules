@@ -3,20 +3,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Each user's own profile: uploadCount/resetMonth can be updated by the
-    // user themselves, but isPro can only ever be set by the server (the
-    // Admin SDK used in api/verify-payment.js bypasses these rules entirely).
-    // A client write that tries to change isPro is rejected outright.
+    // Each user's own profile. The client may only create the initial doc
+    // (first sign-in, nothing to protect yet) and read it. uploadCount and
+    // isPro are both owned by the server from then on (api/gemini.js and
+    // api/verify-payment.js, via the Admin SDK, which bypasses these rules
+    // entirely) — the client can never update either field itself, whether
+    // through the app's own UI or directly via devtools.
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
 
       allow create: if request.auth != null
                     && request.auth.uid == userId
-                    && request.resource.data.isPro == false;
+                    && request.resource.data.isPro == false
+                    && request.resource.data.uploadCount == 0;
 
-      allow update: if request.auth != null
-                    && request.auth.uid == userId
-                    && request.resource.data.isPro == resource.data.isPro;
+      allow update: if false;
     }
 
     // Payment receipts are written only by the server (Admin SDK), never

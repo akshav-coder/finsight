@@ -3,46 +3,39 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { processFile } from '../utils/parseFile';
 import { analyzeTransactions } from '../utils/analyzeData';
-import { Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import UploadScreen from '../components/UploadScreen';
 import { useAuth } from '../context/AuthContext';
 
 export default function UploadView() {
   const { setAppData } = useData();
-  const { canUpload, incrementUpload } = useAuth();
+  const { canUpload, refreshAccountStatus } = useAuth();
   const navigate = useNavigate();
-  
+
   const [appState, setAppState] = useState('uploading');
   const [errorMsg, setErrorMsg] = useState('');
 
-  if (import.meta.env.VITE_ENABLE_AI !== 'true') {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 animate-fade-in-up h-full min-h-[60vh]">
-        <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center mb-6 text-primary-500 dark:text-primary-400 shadow-inner">
-          <Sparkles className="w-8 h-8" />
-        </div>
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2 text-center tracking-tight">AI Analysis Coming Soon 🚀</h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md text-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-sm">
-          We're fine-tuning our AI models for the Indian market. Full statement analysis will be available in the coming weeks!
-        </p>
-      </div>
-    );
-  }
+  // Note: PDF/TXT statements require AI parsing (gated below via
+  // VITE_ENABLE_AI and surfaced as a friendly error if it's off). CSV/Excel
+  // try a deterministic local parser first and only fall back to AI if that
+  // fails — so they work even while AI parsing is disabled.
 
   const handleFileSelect = async (file) => {
     try {
       setAppState('analyzing');
       setErrorMsg('');
-      
+
       const transactions = await processFile(file);
       if (!transactions || transactions.length === 0) {
         throw new Error("No transactions were found.");
       }
-      
+
       const analyzedData = analyzeTransactions(transactions);
       setAppData({ ...analyzedData, transactions });
-      
-      await incrementUpload();
+
+      // Upload count is now tracked server-side (see api/gemini.js) — this
+      // just re-syncs the locally displayed count/Pro status from Firestore.
+      await refreshAccountStatus();
       navigate('/app/statement-analytics/overview');
     } catch (err) {
       const isAIEnabled = import.meta.env.VITE_ENABLE_AI === 'true';
