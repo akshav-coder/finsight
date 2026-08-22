@@ -33,6 +33,34 @@ export function calculateFDCumulative(principal, annualRate, totalYears, compoun
   };
 }
 
+// --- Premature Withdrawal Impact ---
+// Breaking an FD early typically costs two things: the bank pays whatever
+// rate actually applied for the real holding period (not the rate you
+// booked at) and usually applies a further penalty (commonly 0.5-1%) on
+// top. Banks price tenure-by-tenure, and we don't have a full rate card
+// here, so this approximates using (booked rate − penalty) as the
+// effective rate for the actual holding period — a reasonable, clearly
+// labeled estimate, not a bank-exact figure.
+export function calculatePrematureWithdrawal(principal, bookedRate, monthsHeld, compoundingPerYear = 4, penaltyPercent = 1) {
+  if (!principal || !bookedRate || !monthsHeld) {
+    return { effectiveRate: 0, payableAmount: principal, interestEarned: 0, penaltyCost: 0 };
+  }
+  const effectiveRate = Math.max(0, bookedRate - penaltyPercent);
+  const yearsHeld = monthsHeld / 12;
+
+  const withPenalty = calculateFDCumulative(principal, effectiveRate, yearsHeld, compoundingPerYear);
+  // What the same holding period would have earned at the full booked rate
+  // (no penalty) - the gap between the two is the actual cost of breaking it.
+  const withoutPenalty = calculateFDCumulative(principal, bookedRate, yearsHeld, compoundingPerYear);
+
+  return {
+    effectiveRate,
+    payableAmount: withPenalty.maturityAmount,
+    interestEarned: withPenalty.totalInterest,
+    penaltyCost: Math.max(0, withoutPenalty.totalInterest - withPenalty.totalInterest)
+  };
+}
+
 // --- FD NON-CUMULATIVE (Simple Interest paid periodically) ---
 // Interest is calculated on principal and paid out at chosen frequency.
 // Principal is returned at maturity.
@@ -99,6 +127,37 @@ export function calculateRDMaturity(monthlyDeposit, annualRate, months) {
   return maturity;
 }
 
+// --- Peak Annual Interest (for an honest TDS threshold check) ---
+// Compound interest earns more in later years than earlier ones (the base
+// balance is bigger), so "total interest ÷ number of years" understates the
+// final year's actual interest — a multi-year deposit can cross the ₹40,000
+// TDS threshold in its last year while the *average* stays under it, wrongly
+// telling the depositor no TDS will be deducted. This scans a schedule
+// (quarterly for FD, monthly for RD) and returns the single highest amount
+// of interest earned in any one full year, which is what actually
+// determines whether TDS applies.
+export function getPeakAnnualInterest(schedule, periodsPerYear) {
+  if (!schedule || schedule.length < 2 || !periodsPerYear) {
+    return schedule?.[schedule.length - 1]?.interest || 0;
+  }
+
+  let peak = 0;
+  for (let i = 0; i + periodsPerYear < schedule.length; i += periodsPerYear) {
+    const yearInterest = schedule[i + periodsPerYear].interest - schedule[i].interest;
+    peak = Math.max(peak, yearInterest);
+  }
+
+  // A trailing partial year beyond the last full year window
+  const lastIndex = schedule.length - 1;
+  const lastFullBoundary = Math.floor(lastIndex / periodsPerYear) * periodsPerYear;
+  if (lastFullBoundary < lastIndex) {
+    const partial = schedule[lastIndex].interest - schedule[lastFullBoundary].interest;
+    peak = Math.max(peak, partial);
+  }
+
+  return peak;
+}
+
 // --- Tax Calculation ---
 export function calculatePostTaxReturns(grossInterest, taxSlabPercent, annualInterest) {
   if (!grossInterest || grossInterest <= 0) {
@@ -122,6 +181,30 @@ export function calculatePostTaxReturns(grossInterest, taxSlabPercent, annualInt
     tdsApplicable,
     totalTaxAmount: Math.round(totalTaxAmount)
   };
+}
+
+// --- FD Non-Cumulative Growth Schedule (for chart) ---
+// A non-cumulative FD doesn't compound — the principal sits unchanged until
+// maturity, and interest is paid OUT at each period rather than added to
+// the balance. The "interest" series here is the running total already
+// received by that point (grows in flat steps, not a compounding curve) —
+// using generateFDSchedule's compound curve for a non-cumulative FD would
+// show growth that doesn't match how the product actually works.
+export function generateFDNonCumulativeSchedule(principal, annualRate, totalYears, payoutFrequency = 'Monthly') {
+  const { payoutPerPeriod, totalPayouts } = calculateFDNonCumulative(principal, annualRate, totalYears, payoutFrequency);
+  const schedule = [{ period: 0, label: 'Start', principal, interest: 0, total: principal }];
+
+  for (let i = 1; i <= totalPayouts; i++) {
+    const interestSoFar = Math.round(payoutPerPeriod * i);
+    schedule.push({
+      period: i,
+      label: `P${i}`,
+      principal,
+      interest: interestSoFar,
+      total: principal + interestSoFar
+    });
+  }
+  return schedule;
 }
 
 // --- FD Growth Schedule (for chart) ---

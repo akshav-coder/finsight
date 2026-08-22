@@ -5,6 +5,11 @@ import {
   calculateFDNonCumulative,
   calculateRDMaturity,
   calculatePostTaxReturns,
+  calculatePrematureWithdrawal,
+  getPeakAnnualInterest,
+  generateFDSchedule,
+  generateFDNonCumulativeSchedule,
+  generateRDSchedule,
 } from './fdRdCalculations';
 
 describe('totalYearsFromPeriod', () => {
@@ -64,6 +69,95 @@ describe('calculateRDMaturity', () => {
 
   it('returns 0 for invalid input', () => {
     expect(calculateRDMaturity(0, 7, 12)).toBe(0);
+  });
+});
+
+describe('getPeakAnnualInterest', () => {
+  it('finds the highest single-year interest, not the average — the actual TDS-relevant figure', () => {
+    // Regression: ₹5,00,000 at 7% cumulative for 3 years earns ₹35,930 /
+    // ₹38,511 / ₹41,279 in years 1/2/3 respectively (compounding earns
+    // more each year). The average (₹38,573) stays under the ₹40,000 TDS
+    // threshold, wrongly telling the depositor no TDS applies — but year 3
+    // alone crosses it. The peak, not the average, is what a bank actually
+    // checks.
+    const schedule = generateFDSchedule(500000, 7, 3, 4); // quarterly
+    const peak = getPeakAnnualInterest(schedule, 4);
+    const totalInterest = schedule[schedule.length - 1].interest;
+    const average = totalInterest / 3;
+
+    expect(peak).toBeGreaterThan(40000); // crosses the threshold
+    expect(average).toBeLessThan(40000); // average alone would miss it
+    expect(peak).toBeGreaterThan(average); // compounding: later years earn more
+  });
+
+  it('equals total interest for a schedule shorter than one year', () => {
+    const schedule = generateFDSchedule(100000, 7, 0.5, 4); // 6 months
+    expect(getPeakAnnualInterest(schedule, 4)).toBe(schedule[schedule.length - 1].interest);
+  });
+
+  it('handles an RD (monthly) schedule the same way', () => {
+    const schedule = generateRDSchedule(10000, 7.5, 36);
+    const peak = getPeakAnnualInterest(schedule, 12);
+    const totalInterest = schedule[schedule.length - 1].interest;
+    // Year 3 should earn more than a flat average of the 3 years.
+    expect(peak).toBeGreaterThan(totalInterest / 3);
+  });
+});
+
+describe('generateFDNonCumulativeSchedule', () => {
+  it('keeps principal flat throughout — a non-cumulative FD does not compound', () => {
+    const schedule = generateFDNonCumulativeSchedule(100000, 7, 3, 'Monthly');
+    expect(schedule.every((row) => row.principal === 100000)).toBe(true);
+  });
+
+  it('interest grows in flat linear steps, not a compounding curve', () => {
+    const schedule = generateFDNonCumulativeSchedule(100000, 7, 3, 'Monthly');
+    const steps = [];
+    for (let i = 2; i < schedule.length; i++) {
+      steps.push(schedule[i].interest - schedule[i - 1].interest);
+    }
+    // Every monthly payout should be (within a rupee of rounding) the same
+    // size — simple interest doesn't compound. Contrast with
+    // generateFDSchedule's compound curve, where each step is meaningfully
+    // bigger than the last.
+    steps.forEach((step) => expect(Math.abs(step - steps[0])).toBeLessThanOrEqual(1));
+  });
+
+  it('final total interest matches calculateFDNonCumulative\'s figure', () => {
+    const { totalInterest } = calculateFDNonCumulative(100000, 7, 3, 'Monthly');
+    const schedule = generateFDNonCumulativeSchedule(100000, 7, 3, 'Monthly');
+    const last = schedule[schedule.length - 1];
+    expect(last.interest).toBeCloseTo(totalInterest, 0);
+  });
+});
+
+describe('calculatePrematureWithdrawal', () => {
+  it('always earns less than staying to full maturity at the booked rate', () => {
+    const { maturityAmount: fullTermInterest } = calculateFDCumulative(100000, 7, 2);
+    const early = calculatePrematureWithdrawal(100000, 7, 12); // withdrawn after 1 of 2 years
+    expect(early.payableAmount).toBeLessThan(fullTermInterest);
+  });
+
+  it('applies the penalty as a lower effective rate than the booked rate', () => {
+    const result = calculatePrematureWithdrawal(100000, 7, 12, 4, 1);
+    expect(result.effectiveRate).toBe(6); // 7% booked - 1% penalty
+  });
+
+  it('penaltyCost is the interest gap versus the same holding period at the full booked rate', () => {
+    const result = calculatePrematureWithdrawal(100000, 7, 12, 4, 1);
+    const withoutPenalty = calculateFDCumulative(100000, 7, 1, 4);
+    expect(result.penaltyCost).toBeCloseTo(withoutPenalty.totalInterest - result.interestEarned, 5);
+    expect(result.penaltyCost).toBeGreaterThan(0);
+  });
+
+  it('a bigger penalty percent costs more interest', () => {
+    const smallPenalty = calculatePrematureWithdrawal(100000, 7, 12, 4, 0.5);
+    const bigPenalty = calculatePrematureWithdrawal(100000, 7, 12, 4, 2);
+    expect(bigPenalty.interestEarned).toBeLessThan(smallPenalty.interestEarned);
+  });
+
+  it('returns the principal unchanged for invalid input', () => {
+    expect(calculatePrematureWithdrawal(0, 7, 12)).toEqual({ effectiveRate: 0, payableAmount: 0, interestEarned: 0, penaltyCost: 0 });
   });
 });
 

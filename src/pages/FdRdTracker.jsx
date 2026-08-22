@@ -10,13 +10,16 @@ import BankComparisonTable from '../components/FdRd/BankComparisonTable';
 import TaxImpactCard from '../components/FdRd/TaxImpactCard';
 import FdRdAISummary from '../components/FdRd/FdRdAISummary';
 import NonCumulativeBreakdown from '../components/FdRd/NonCumulativeBreakdown';
-import { 
+import PrematureWithdrawalCard from '../components/FdRd/PrematureWithdrawalCard';
+import {
   calculateFDCumulative,
   calculateFDNonCumulative,
-  calculateRDMaturity, 
-  calculatePostTaxReturns, 
+  calculateRDMaturity,
+  calculatePostTaxReturns,
   generateFDSchedule,
+  generateFDNonCumulativeSchedule,
   generateRDSchedule,
+  getPeakAnnualInterest,
   totalYearsFromPeriod
 } from '../utils/fdRdCalculations';
 
@@ -54,21 +57,32 @@ export default function FdRdTracker() {
     const isCumulative = fdData.payoutType === 'Cumulative';
 
     let maturityAmount, grossInterest, nonCumulativeData = null;
+    // The chart must reflect how the chosen FD type actually behaves —
+    // compounding growth for Cumulative, a flat principal + running payout
+    // total for Non-Cumulative (using the compounding schedule for both
+    // would show growth that doesn't happen in a Non-Cumulative FD).
+    let schedule;
 
     if (isCumulative) {
       const r = calculateFDCumulative(fdData.amount, fdData.rate, totalYears, fdData.compounding);
       maturityAmount = r.maturityAmount;
       grossInterest = r.totalInterest;
+      schedule = generateFDSchedule(fdData.amount, fdData.rate, totalYears, fdData.compounding);
     } else {
       const r = calculateFDNonCumulative(fdData.amount, fdData.rate, totalYears, fdData.payoutFrequency);
       maturityAmount = fdData.amount; // principal returned at maturity
       grossInterest = r.totalInterest;
       nonCumulativeData = r;
+      schedule = generateFDNonCumulativeSchedule(fdData.amount, fdData.rate, totalYears, fdData.payoutFrequency);
     }
-    
-    const annualInterest = totalYears > 0 ? grossInterest / totalYears : grossInterest;
+
+    // TDS applies if interest earned in ANY single year crosses ₹40,000 —
+    // for a Cumulative FD, compounding means later years earn more than
+    // earlier ones, so the peak year (not the average) is what matters.
+    const annualInterest = isCumulative
+      ? getPeakAnnualInterest(schedule, fdData.compounding)
+      : (totalYears > 0 ? grossInterest / totalYears : grossInterest); // simple interest is flat per year already
     const taxImpact = calculatePostTaxReturns(grossInterest, fdData.taxSlab, annualInterest);
-    const schedule = generateFDSchedule(fdData.amount, fdData.rate, totalYears, fdData.compounding);
 
     return { maturityAmount, grossInterest, taxImpact, schedule, totalYears, nonCumulativeData, isCumulative };
   }, [fdData]);
@@ -80,9 +94,12 @@ export default function FdRdTracker() {
     const maturity = calculateRDMaturity(rdData.monthlyAmount, rdData.rate, totalMonths);
     const totalInvested = rdData.monthlyAmount * totalMonths;
     const grossInterest = maturity - totalInvested;
-    const annualInterest = totalYears > 0 ? (grossInterest / totalYears) : grossInterest;
-    const taxImpact = calculatePostTaxReturns(grossInterest, rdData.taxSlab, annualInterest);
     const schedule = generateRDSchedule(rdData.monthlyAmount, rdData.rate, totalMonths);
+    // Same reasoning as the FD side: RD interest compounds quarterly, so
+    // later years earn more — the peak year, not the average, determines
+    // whether TDS actually applies.
+    const annualInterest = getPeakAnnualInterest(schedule, 12);
+    const taxImpact = calculatePostTaxReturns(grossInterest, rdData.taxSlab, annualInterest);
 
     return { maturityAmount: maturity, totalInvested, grossInterest, taxImpact, schedule, totalYears, totalMonths };
   }, [rdData]);
@@ -159,6 +176,10 @@ export default function FdRdTracker() {
                 <FdGrowthChart schedule={fdResults.schedule} />
                 <TaxImpactCard taxImpact={fdResults.taxImpact} />
               </div>
+
+              {fdResults.isCumulative && (
+                <PrematureWithdrawalCard fdData={fdData} fdResults={fdResults} />
+              )}
             </>
           ) : (
             <>

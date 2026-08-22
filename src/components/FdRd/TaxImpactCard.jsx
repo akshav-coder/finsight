@@ -3,8 +3,18 @@ import { formatINR } from '../../utils/fdRdCalculations';
 
 export default function TaxImpactCard({ taxImpact }) {
   const { grossInterest, tdsAmount, additionalTax, netInterest, tdsApplicable, totalTaxAmount } = taxImpact;
-  
-  const taxPercentage = (totalTaxAmount / grossInterest) * 100 || 0;
+
+  // Whether the BANK withholds TDS depends on the interest amount, not the
+  // depositor's own tax slab — someone in the 0% slab can still have TDS
+  // deducted (that's exactly what Form 15G/15H exists to reclaim). Basing
+  // this message on totalTaxAmount (which uses the depositor's slab rate)
+  // instead of tdsApplicable produced a "no tax will be deducted" message
+  // sitting directly under a "TDS Active, -₹X deducted" line.
+  const taxInsight = tdsApplicable
+    ? `The bank will deduct ${formatINR(tdsAmount)} as TDS since your interest crosses ₹40,000/year. If your total income is below the taxable limit, submit Form 15G/15H to avoid this.`
+    : totalTaxAmount > 0
+      ? `No TDS is withheld (interest is under ₹40,000/year), but you still owe ${formatINR(totalTaxAmount)} in tax at your slab rate when you file returns.`
+      : "Your interest is below the TDS threshold and you're in the 0% slab — no tax applies.";
 
   return (
     <div className="glass-panel p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full uppercase tracking-tight">
@@ -50,11 +60,8 @@ export default function TaxImpactCard({ taxImpact }) {
           <ShieldAlert className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-[10px] font-bold text-amber-800 dark:text-amber-400 mb-1">Tax Insight</p>
-            <p className="text-[10px] text-amber-700 dark:text-amber-500 font-medium leading-relaxed lowercase italic first-letter:uppercase">
-              {taxPercentage > 0 
-                ? `You're paying ${taxPercentage.toFixed(1)}% of your interest in taxes. Submit Form 15G/15H to avoid TDS if your income is below taxable limit.`
-                : "Your interest is below the TDS threshold. No tax will be deducted by the bank."
-              }
+            <p className="text-[10px] text-amber-700 dark:text-amber-500 font-medium leading-relaxed">
+              {taxInsight}
             </p>
           </div>
         </div>
