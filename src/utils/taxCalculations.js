@@ -130,6 +130,16 @@ export const NEW_REGIME_SLABS = FY_CONFIG['2025-26'].newSlabs;
 
 // ─── Deduction Calculator ──────────────────────────────────────────────────
 
+// Section 80D: the ₹50,000 senior-citizen cap applies to a self+family policy
+// whenever the POLICYHOLDER (the taxpayer, not the parents) is 60+, not just
+// when their parents are seniors.
+export function getSection80DSelfLimit(ageGroup, fy = DEFAULT_FY) {
+  const config = getTaxConfig(fy);
+  return (ageGroup === '60-80' || ageGroup === 'above80')
+    ? config.section80D_seniorParents
+    : config.section80D_self;
+}
+
 export function calculateDeductions(inputs, fy = DEFAULT_FY) {
   const config = getTaxConfig(fy);
 
@@ -161,7 +171,7 @@ export function calculateDeductions(inputs, fy = DEFAULT_FY) {
   // 80D
   deductions.total80DSelfInvested = inputs.healthInsuranceSelf || 0;
   deductions.total80DParentsInvested = inputs.healthInsuranceParents || 0;
-  const selfFamily80D = Math.min(deductions.total80DSelfInvested, config.section80D_self);
+  const selfFamily80D = Math.min(deductions.total80DSelfInvested, getSection80DSelfLimit(inputs.ageGroup, fy));
   const parents80D = inputs.parentsAbove60
     ? Math.min(deductions.total80DParentsInvested, config.section80D_seniorParents)
     : Math.min(deductions.total80DParentsInvested, config.section80D_parents);
@@ -190,10 +200,18 @@ export function calculateDeductions(inputs, fy = DEFAULT_FY) {
 
 // ─── Tax Slab Calculator ──────────────────────────────────────────────────
 
-export function calculateTax(taxableIncome, regime, ageGroup, fy = DEFAULT_FY) {
-  const config = getTaxConfig(fy);
-  const slabs = regime === 'new' ? config.newSlabs : config.oldSlabs;
+// Surcharge slabs (same across FY23-24 – FY25-26; unchanged by Finance Act 2025).
+// New regime surcharge is capped at 25% even above ₹5Cr (old regime keeps rising to 37%).
+function getSurchargeThresholds(regime) {
+  return [
+    { limit: 5000000, rate: 0.10 },
+    { limit: 10000000, rate: 0.15 },
+    { limit: 20000000, rate: 0.25 },
+    { limit: 50000000, rate: regime === 'new' ? 0.25 : 0.37 },
+  ];
+}
 
+function computeSlabTax(taxableIncome, slabs, regime, ageGroup) {
   let tax = 0;
   for (const slab of slabs) {
     let effectiveMin = slab.min;
@@ -214,16 +232,81 @@ export function calculateTax(taxableIncome, regime, ageGroup, fy = DEFAULT_FY) {
       if (taxableInThisSlab > 0) tax += taxableInThisSlab * slab.rate;
     }
   }
+  return tax;
+}
 
-  // Rebate u/s 87A
+// Marginal tax rate: the rate of the highest slab the income has reached.
+// Useful for "what if I invest ₹X more" projections.
+export function getMarginalRate(taxableIncome, regime, ageGroup, fy = DEFAULT_FY) {
+  const config = getTaxConfig(fy);
+  const slabs = regime === 'new' ? config.newSlabs : config.oldSlabs;
+  let rate = 0;
+  for (const slab of slabs) {
+    let effectiveMin = slab.min;
+    if (regime === 'old') {
+      if (ageGroup === '60-80') {
+        if (effectiveMin === 0) continue;
+        if (effectiveMin === 250000) effectiveMin = 300000;
+      }
+      if (ageGroup === 'above80') {
+        if (effectiveMin === 0 || effectiveMin === 250000) continue;
+      }
+    }
+    if (taxableIncome > effectiveMin) rate = slab.rate;
+  }
+  return rate;
+}
+
+export function calculateTax(taxableIncome, regime, ageGroup, fy = DEFAULT_FY) {
+  const config = getTaxConfig(fy);
+  const slabs = regime === 'new' ? config.newSlabs : config.oldSlabs;
+
+  let tax = computeSlabTax(taxableIncome, slabs, regime, ageGroup);
+
+  // Rebate u/s 87A. The New Regime has a statutory marginal-relief proviso
+  // (CBDT Circular 01/2023, carried forward by Finance Act 2025) so incomes
+  // just above the threshold don't jump straight to the full slab tax — e.g.
+  // without it, ₹1 more than ₹12L would owe the full ₹60,000 (FY25-26) instead
+  // of just the small amount by which the limit was exceeded. The Old Regime's
+  // ₹5L rebate has no such provision in law — crossing it is a hard cliff.
   const rb87A = regime === 'new' ? config.rebate87A_new : config.rebate87A_old;
   if (taxableIncome <= rb87A.limit) {
     tax = Math.max(0, tax - rb87A.amount);
+  } else if (regime === 'new') {
+    const excessIncome = taxableIncome - rb87A.limit;
+    if (tax > excessIncome) tax = excessIncome;
   }
 
-  // Surcharge (simplified)
-  let surcharge = 0;
-  if (taxableIncome > 5000000) surcharge = tax * 0.10;
+  // Surcharge: tiered by income, with marginal relief at each threshold so that
+  // crossing a boundary never costs more tax than the income that crossed it.
+  const thresholds = getSurchargeThresholds(regime);
+  let surchargeRate = 0;
+  let crossedLimit = null;
+  for (const t of thresholds) {
+    if (taxableIncome > t.limit) {
+      surchargeRate = t.rate;
+      crossedLimit = t.limit;
+    }
+  }
+
+  let surcharge = tax * surchargeRate;
+
+  if (crossedLimit !== null) {
+    let taxAtLimit = computeSlabTax(crossedLimit, slabs, regime, ageGroup);
+    if (crossedLimit <= rb87A.limit) {
+      taxAtLimit = Math.max(0, taxAtLimit - rb87A.amount);
+    }
+    let rateAtLimit = 0;
+    for (const t of thresholds) {
+      if (crossedLimit > t.limit) rateAtLimit = t.rate;
+    }
+    const maxPayable = taxAtLimit * (1 + rateAtLimit) + (taxableIncome - crossedLimit);
+    if (tax + surcharge > maxPayable) {
+      tax = maxPayable;
+      surcharge = 0;
+    }
+  }
+
   tax += surcharge;
 
   const cess = tax * config.cess_rate;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateTax, calculateDeductions, calculateComprehensiveTax } from './taxCalculations';
+import { calculateTax, calculateDeductions, calculateComprehensiveTax, getSection80DSelfLimit, getMarginalRate } from './taxCalculations';
 
 describe('calculateTax — new regime, FY 2025-26', () => {
   it('taxes a mid-range income correctly across multiple slabs', () => {
@@ -15,17 +15,52 @@ describe('calculateTax — new regime, FY 2025-26', () => {
     expect(totalTax).toBe(0);
   });
 
-  it('loses the full rebate one rupee past the threshold (a hard cliff, not marginal relief)', () => {
-    const { totalTax } = calculateTax(1200001, 'new', undefined, '2025-26');
-    expect(totalTax).toBeCloseTo(62400.16, 1);
+  it('applies marginal relief one rupee past the ₹12L threshold, instead of a hard cliff', () => {
+    // BUG (found live in the browser): ₹12,81,000 CTC -> ₹12,06,000 taxable showed
+    // ₹63,336 tax (full slab tax, no relief) instead of being capped near the
+    // ₹6,000 excess over the ₹12L rebate limit. The New Regime has a statutory
+    // marginal-relief proviso (CBDT Circular 01/2023, carried into FY25-26 by
+    // Finance Act 2025) so tax payable should never exceed the income that
+    // crossed the threshold.
+    const oneRupeeOver = calculateTax(1200001, 'new', undefined, '2025-26');
+    expect(oneRupeeOver.tax).toBe(1); // capped at the ₹1 excess, not ~₹60,000
+    expect(oneRupeeOver.totalTax).toBeCloseTo(1.04, 2);
+
+    const sixThousandOver = calculateTax(1206000, 'new', undefined, '2025-26');
+    expect(sixThousandOver.tax).toBe(6000); // capped at the ₹6,000 excess
+    expect(sixThousandOver.totalTax).toBe(6240);
   });
 
-  it('applies a 10% surcharge above ₹50L', () => {
+  it('does not apply marginal relief once income clears the relief band (tax owed exceeds the excess)', () => {
+    // Well past ₹12L, the normal slab tax is less than the "excess income" cap,
+    // so marginal relief stops applying and full slab tax is charged again.
+    const { tax } = calculateTax(1500000, 'new', undefined, '2025-26');
+    expect(tax).toBe(105000);
+  });
+
+  it('applies the correct tiered surcharge (not a flat 10% for every income above ₹50L)', () => {
+    // BUG (found live in the browser): ₹1.1 Cr CTC -> ₹1,09,25,000 taxable
+    // showed tax computed with a flat 10% surcharge (₹32,68,980 total) instead
+    // of the 15% rate that applies between ₹1Cr-₹2Cr (correct: ₹34,17,570).
+    const { tax, totalTax } = calculateTax(10925000, 'new', undefined, '2025-26');
+    expect(tax).toBe(3286125); // slab tax * 1.15, not * 1.10
+    expect(totalTax).toBe(3417570);
+  });
+
+  it('caps New Regime surcharge at 25% even above ₹5Cr (Old Regime keeps rising to 37%)', () => {
+    const { totalTax: newRegimeTax } = calculateTax(60000000, 'new', undefined, '2025-26');
+    const { totalTax: oldRegimeTax } = calculateTax(60000000, 'old', 'below60', '2025-26');
+    expect(newRegimeTax).toBe(22854000);
+    expect(oldRegimeTax).toBe(25379250);
+    expect(oldRegimeTax).toBeGreaterThan(newRegimeTax);
+  });
+
+  it('applies marginal relief across a surcharge threshold crossing (₹50L boundary)', () => {
+    // Crossing ₹50L by a small amount should not cost anywhere near the full
+    // 10% surcharge on the entire tax — only up to the excess income.
     const { totalTax: below } = calculateTax(4999999, 'new', undefined, '2025-26');
     const { totalTax: above } = calculateTax(5000001, 'new', undefined, '2025-26');
-    // The surcharge should make the effective rate jump right at the threshold,
-    // not just track the extra ₹2 of income.
-    expect(above - below).toBeGreaterThan(1000);
+    expect(above - below).toBeLessThan(10); // ~₹2 of income, not a >₹1,000 cliff
   });
 
   it('returns zero tax for zero income', () => {
@@ -54,6 +89,14 @@ describe('calculateTax — old regime, FY 2025-26', () => {
     const senior = calculateTax(600000, 'old', '60-80', '2025-26').totalTax;
     const superSenior = calculateTax(600000, 'old', 'above80', '2025-26').totalTax;
     expect(superSenior).toBeLessThanOrEqual(senior);
+  });
+
+  it('has NO marginal relief past the ₹5L rebate threshold (unlike the New Regime)', () => {
+    // Section 87A's marginal-relief proviso only exists for the New Regime.
+    // The Old Regime's ₹5L rebate is a hard cliff by law — this must stay a
+    // cliff even though the New Regime near ₹12L is now smoothed.
+    const { totalTax } = calculateTax(500001, 'old', 'below60', '2025-26');
+    expect(totalTax).toBeCloseTo(13000.21, 1); // full slab tax, not capped at ₹1
   });
 });
 
@@ -85,6 +128,35 @@ describe('calculateDeductions', () => {
       '2025-26'
     );
     expect(senior.section80D).toBeGreaterThan(younger.section80D);
+  });
+
+  it('gives a higher 80D self+family limit when the FILER (not just their parents) is a senior citizen', () => {
+    // BUG (found live in the browser): a 60-80 filer with ₹40,000 of self+family
+    // health insurance premium was capped at the regular ₹25,000 limit, showing
+    // "Total Deductions -₹75,000" (50k std ded + 25k 80D) instead of the correct
+    // -₹90,000 (50k + 40k, since the ₹50k senior cap wasn't hit yet).
+    const regular = calculateDeductions(
+      { ageGroup: 'below60', healthInsuranceSelf: 40000 },
+      '2025-26'
+    );
+    const senior = calculateDeductions(
+      { ageGroup: '60-80', healthInsuranceSelf: 40000 },
+      '2025-26'
+    );
+    expect(regular.section80D).toBe(25000); // capped at the regular limit
+    expect(senior.section80D).toBe(40000); // fully allowed, under the ₹50k senior cap
+
+    const superSenior = calculateDeductions(
+      { ageGroup: 'above80', healthInsuranceSelf: 60000 },
+      '2025-26'
+    );
+    expect(superSenior.section80D).toBe(50000); // capped at the ₹50k senior limit
+  });
+
+  it('getSection80DSelfLimit returns ₹25k for regular filers and ₹50k for senior filers', () => {
+    expect(getSection80DSelfLimit('below60', '2025-26')).toBe(25000);
+    expect(getSection80DSelfLimit('60-80', '2025-26')).toBe(50000);
+    expect(getSection80DSelfLimit('above80', '2025-26')).toBe(50000);
   });
 
   it('computes HRA exemption as the minimum of the three statutory limits', () => {
@@ -146,5 +218,20 @@ describe('calculateComprehensiveTax', () => {
     );
     expect(result.oldRegime.taxableIncome).toBeGreaterThanOrEqual(0);
     expect(result.newRegime.taxableIncome).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('getMarginalRate', () => {
+  it('matches the actual Old Regime slab the income falls into, unlike a hardcoded guess', () => {
+    // BUG (found live in the browser): the "what if I add ₹50,000 to NPS" widget
+    // used hardcoded CTC breakpoints (₹7L/10L/12L/15L) copied from a stale FY's
+    // New Regime slabs, applied to raw CTC instead of Old Regime taxable income.
+    // For ₹15,00,000 CTC (₹14,10,000 Old Regime taxable with senior 80D used),
+    // it estimated a 20% marginal rate (₹10,000 saved) when the real Old Regime
+    // slab rate at that income is 30% (₹15,000 saved) — NPS 80CCD(1B) is an
+    // Old-Regime-only deduction, so the New Regime's slabs are irrelevant here.
+    expect(getMarginalRate(1410000, 'old', '60-80', '2025-26')).toBe(0.30);
+    expect(getMarginalRate(600000, 'old', 'below60', '2025-26')).toBe(0.20);
+    expect(getMarginalRate(200000, 'old', 'below60', '2025-26')).toBe(0);
   });
 });

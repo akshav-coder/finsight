@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Bot, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { getGeminiResponse, generateTaxAdvisorPrompt } from '../../utils/geminiApi';
-import { formatINR, TAX_CONSTANTS } from '../../utils/taxCalculations';
+import { formatINR, TAX_CONSTANTS, getSection80DSelfLimit } from '../../utils/taxCalculations';
 import AIFeatureGate from '../AIFeatureGate';
 
 export default function TaxAIAdvisor({ inputs, taxAnalysis }) {
@@ -14,7 +14,7 @@ export default function TaxAIAdvisor({ inputs, taxAnalysis }) {
     setError('');
     
     // Calculate total unused limits
-    const healthLimit = TAX_CONSTANTS.section80D_self + (inputs.parentsAbove60 ? TAX_CONSTANTS.section80D_seniorParents : TAX_CONSTANTS.section80D_parents);
+    const healthLimit = getSection80DSelfLimit(inputs.ageGroup, taxAnalysis.fy) + (inputs.parentsAbove60 ? TAX_CONSTANTS.section80D_seniorParents : TAX_CONSTANTS.section80D_parents);
     const healthUsed = (inputs.healthInsuranceSelf || 0) + (inputs.healthInsuranceParents || 0);
     const healthRemaining = healthLimit - healthUsed;
     

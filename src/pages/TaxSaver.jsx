@@ -67,7 +67,7 @@ export default function TaxSaver() {
         
         {/* Left Column: Inputs */}
         <div className="w-full xl:w-[400px] flex-shrink-0 space-y-6">
-          <TaxInputForm inputs={inputs} setInputs={setInputs} fy={fy} setFy={setFy} />
+          <TaxInputForm inputs={inputs} setInputs={setInputs} fy={fy} setFy={setFy} taxAnalysis={taxAnalysis} />
         </div>
 
         {/* Right Column: Dashboard & Advice */}

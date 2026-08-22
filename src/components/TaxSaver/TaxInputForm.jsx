@@ -13,20 +13,16 @@ import {
   Shield,
   GraduationCap
 } from 'lucide-react';
-import { FINANCIAL_YEARS } from '../../utils/taxCalculations';
+import { FINANCIAL_YEARS, getMarginalRate } from '../../utils/taxCalculations';
 
-export default function TaxInputForm({ inputs, setInputs, fy, setFy }) {
+export default function TaxInputForm({ inputs, setInputs, fy, setFy, taxAnalysis }) {
   const [showNpsWhatIf, setShowNpsWhatIf] = useState(false);
 
-  const getMarginalTaxRate = () => {
-    const ctc = inputs.annualCTC || 0;
-    if (ctc > 1500000) return 0.30;
-    if (ctc > 1200000) return 0.20;
-    if (ctc > 1000000) return 0.15;
-    if (ctc > 700000) return 0.10;
-    return 0;
-  };
-  const npsTaxSaved = Math.round(50000 * getMarginalTaxRate());
+  // NPS 80CCD(1B) is an old-regime-only deduction, so the savings estimate
+  // should reflect the marginal rate on old-regime taxable income, not raw CTC.
+  const oldRegimeTaxableIncome = taxAnalysis?.oldRegime?.taxableIncome || 0;
+  const marginalRate = getMarginalRate(oldRegimeTaxableIncome, 'old', inputs.ageGroup, fy);
+  const npsTaxSaved = Math.round(50000 * marginalRate);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

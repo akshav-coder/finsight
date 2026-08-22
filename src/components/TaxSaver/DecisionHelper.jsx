@@ -1,11 +1,13 @@
 import { Lightbulb, Info, CheckCircle2 } from 'lucide-react';
-import { formatINR } from '../../utils/taxCalculations';
+import { formatINR, getTaxConfig } from '../../utils/taxCalculations';
 
 export default function DecisionHelper({ taxAnalysis }) {
   if (!taxAnalysis) return null;
 
-  const { oldRegime, newRegime, grossIncome } = taxAnalysis;
+  const { oldRegime, newRegime } = taxAnalysis;
   const isOldBetter = oldRegime.totalTax < newRegime.totalTax;
+  const config = getTaxConfig(taxAnalysis.fy);
+  const newRegimeZeroTaxLakhs = config.rebate87A_new.limit / 100000;
   
   // Breakeven logic simplified: 
   // Under the new regime from FY24-25, the standard deduction is 50k for both.
@@ -57,7 +59,7 @@ export default function DecisionHelper({ taxAnalysis }) {
           <ul className="space-y-2">
             <li className="flex items-center text-xs font-bold text-slate-600 dark:text-slate-400">
               <CheckCircle2 className={`w-3 h-3 mr-2 ${!isOldBetter ? 'text-indigo-500' : 'text-slate-400'}`} />
-              Gross income {"<"} ₹7.5 Lakhs (0 tax)
+              Taxable income {"<="} ₹{newRegimeZeroTaxLakhs}L (0 tax, u/s 87A)
             </li>
             <li className="flex items-center text-xs font-bold text-slate-600 dark:text-slate-400">
                <CheckCircle2 className={`w-3 h-3 mr-2 ${!isOldBetter ? 'text-indigo-500' : 'text-slate-400'}`} />
@@ -80,7 +82,7 @@ export default function DecisionHelper({ taxAnalysis }) {
          <div>
             <p className="text-xs font-black text-blue-900 dark:text-blue-400 uppercase tracking-tight">Breakeven Hint</p>
             <p className="text-[10px] sm:text-xs text-blue-800 dark:text-blue-300 font-medium mt-1 leading-relaxed">
-               Your current deductions (excl. std deduction) total <strong className="text-blue-600 dark:text-blue-400">{formatINR(oldRegime.totalDeductions - 50000)}</strong>. 
+               Your current deductions (excl. std deduction) total <strong className="text-blue-600 dark:text-blue-400">{formatINR(oldRegime.totalDeductions - oldRegime.deductionsBreakdown.standardDeduction)}</strong>.
                If you stop investing or stop paying rent, the New Regime will quickly become the mathematical winner.
             </p>
          </div>

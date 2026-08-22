@@ -1,5 +1,5 @@
 import { CheckCircle2, AlertCircle } from 'lucide-react';
-import { formatINR, TAX_CONSTANTS } from '../../utils/taxCalculations';
+import { formatINR, TAX_CONSTANTS, getSection80DSelfLimit } from '../../utils/taxCalculations';
 
 export default function TaxOpportunitiesTable({ inputs, taxAnalysis }) {
   if (!taxAnalysis) return null;
@@ -14,7 +14,7 @@ export default function TaxOpportunitiesTable({ inputs, taxAnalysis }) {
     },
     {
       section: 'Sec 80D (Health Ins - Self)',
-      limit: TAX_CONSTANTS.section80D_self,
+      limit: getSection80DSelfLimit(inputs.ageGroup, taxAnalysis.fy),
       used: deductionsBreakdown.total80DSelfInvested || 0,
     },
     {

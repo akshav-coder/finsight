@@ -1,4 +1,4 @@
-import { formatINR, TAX_CONSTANTS } from '../../utils/taxCalculations';
+import { formatINR, TAX_CONSTANTS, getSection80DSelfLimit } from '../../utils/taxCalculations';
 import { Shield, HeartPulse, Building, TrendingUp } from 'lucide-react';
 
 export default function ActionCards({ inputs, taxAnalysis }) {
@@ -44,7 +44,7 @@ export default function ActionCards({ inputs, taxAnalysis }) {
 
   // Card 2: Health Insurance
   const healthUsed = (inputs.healthInsuranceSelf || 0) + (inputs.healthInsuranceParents || 0);
-  const healthLimit = TAX_CONSTANTS.section80D_self + (inputs.parentsAbove60 ? TAX_CONSTANTS.section80D_seniorParents : TAX_CONSTANTS.section80D_parents);
+  const healthLimit = getSection80DSelfLimit(inputs.ageGroup, taxAnalysis.fy) + (inputs.parentsAbove60 ? TAX_CONSTANTS.section80D_seniorParents : TAX_CONSTANTS.section80D_parents);
   const healthRemaining = healthLimit - healthUsed;
 
   if (healthRemaining > 0) {
